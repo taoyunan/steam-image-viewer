@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Steam Image Inspector</title>
+  <style>
+    :root{
+      --bg:#0f1724;
+      --card:#0b1220;
+      --muted:#9aa4b2;
+      --accent:#06b6d4;
+      --glass: rgba(255,255,255,0.03);
+    }
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      background: linear-gradient(180deg,#071025 0%, #071827 60%);
+      color:#e6eef6;
+      padding:20px;
+      box-sizing:border-box;
+    }
+    .container{ max-width:1100px; margin:0 auto; }
+    header{ display:flex; align-items:center; gap:16px; margin-bottom:18px; }
+    h1{font-size:20px;margin:0}
+    .controls{ display:flex; gap:8px; align-items:center; margin-bottom:12px; flex-wrap:wrap; }
+    input[type="text"]{
+      padding:10px 12px;
+      border-radius:8px;
+      border:1px solid rgba(255,255,255,0.06);
+      background:var(--card);
+      color:inherit;
+      min-width:200px;
+      outline:none;
+    }
+    button{
+      padding:10px 12px;
+      border-radius:8px;
+      border:0;
+      background:var(--accent);
+      color:#052026;
+      font-weight:600;
+      cursor:pointer;
+    }
+    button.ghost{ background:transparent; color:var(--muted); border:1px solid rgba(255,255,255,0.04); }
+    .status{color:var(--muted);font-size:13px;margin-bottom:10px}
+    .grid{ display:block; }
+    .category{margin-bottom:30px;}
+    .category h3{margin:20px 0 10px;color:#06b6d4;font-size:16px;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:4px}
+    .card-grid{display:grid;grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));gap:12px;}
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      padding:8px;
+      border-radius:10px;
+      box-shadow: 0 6px 20px rgba(2,6,23,0.6);
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      align-items:center;
+    }
+    .thumb{
+      width:100%;
+      height:120px;
+      object-fit:cover;
+      border-radius:8px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      transition: all 0.3s ease;
+    }
+    .meta{width:100%;font-size:13px;color:var(--muted);word-break:break-all}
+    .actions{display:flex;gap:8px;width:100%;flex-wrap:wrap;}
+    .small{font-size:12px;padding:7px 8px;border-radius:8px;background:transparent;color:var(--muted);border:1px solid rgba(255,255,255,0.03);cursor:pointer;}
+    .controls-right{margin-left:auto;display:flex;gap:8px;align-items:center}
+    textarea{width:100%;height:160px;background:var(--card);border-radius:8px;padding:10px;color:inherit;border:1px solid rgba(255,255,255,0.04)}
+    footer{margin-top:12px;color:var(--muted);font-size:13px}
+    .hint{font-size:13px;color:var(--muted)}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Steam Image Inspector</h1>
+      <div class="hint">输入 App ID → 查询 API → 识别图片并生成完整链接</div>
+    </header>
+
+    <div class="controls">
+      <label for="appid" class="hint">App ID</label>
+      <input id="appid" type="text" placeholder="例如 359550" value="359550" />
+      <button id="go">查询</button>
+      <div class="controls-right">
+        <button id="copyAll" class="ghost">复制全部链接</button>
+        <button id="exportTxt" class="ghost">导出为 txt</button>
+      </div>
+    </div>
+
+    <div id="status" class="status">准备就绪</div>
+
+    <div id="resultsArea">
+      <div id="grid" class="grid"></div>
+      <div style="margin-top:12px">
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">
+          <strong style="font-size:14px">识别到的 URL（去重，按行）</strong>
+          <div style="flex:1"></div>
+          <button id="refreshImgs" class="small">刷新图片显示</button>
+        </div>
+        <textarea id="urlsBox" readonly placeholder="点击查询后这里会显示识别到的完整链接"></textarea>
+      </div>
+    </div>
+
+    <footer>
+      <div class="hint">注意：如果 API 在浏览器端存在跨域限制（CORS），浏览器会报错。遇到这种情况请使用你自己的后端代理或公开的 CORS proxy。</div>
+    </footer>
+  </div>
+
+<script>
+(async function(){
+  const appInput = document.getElementById('appid');
+  const goBtn = document.getElementById('go');
+  const status = document.getElementById('status');
+  const grid = document.getElementById('grid');
+  const urlsBox = document.getElementById('urlsBox');
+  const copyAllBtn = document.getElementById('copyAll');
+  const exportTxtBtn = document.getElementById('exportTxt');
+  const refreshImgsBtn = document.getElementById('refreshImgs');
+
+  const apiBase = 'https://api.steamcmd.net/v1/info/';
+
+  function setStatus(txt, isError=false){
+    status.textContent = txt;
+    status.style.color = isError ? '#ffb4b4' : '';
+  }
+
+  function findImageCandidates(obj){
+    const results = [];
+    const imageRE = /\.(jpe?g|png|webp)(\?|$)/i;
+    function rec(v){
+      if(v == null) return;
+      if(typeof v === 'string'){
+        const urlTokenRE = /https?:\/\/[^\s"']+\.(?:jpe?g|png|webp)(?:\?[^\s"']*)?/ig;
+        let m;
+        while((m = urlTokenRE.exec(v)) !== null){ results.push(m[0]); }
+        const pathRE = /(?:\.{0,2}\/)?[A-Za-z0-9_\-\/]+?\.(?:jpe?g|png|webp)(?:\?[^\s"']*)?/ig;
+        while((m = pathRE.exec(v)) !== null){
+          if(!/^https?:\/\//i.test(m[0])) results.push(m[0]);
+        }
+        return;
+      }
+      if(Array.isArray(v)){ for(const e of v) rec(e); return; }
+      if(typeof v === 'object'){ for(const k in v) rec(v[k]); }
+    }
+    rec(obj);
+    const uniq = [...new Set(results.map(s=>s.split('#')[0].trim()))];
+    return uniq.filter(s => imageRE.test(s));
+  }
+
+  function buildFullUrl(appid, candidate){
+    const trimmed = candidate.trim();
+    if(/^https?:\/\//i.test(trimmed)) return trimmed;
+    const clean = trimmed.replace(/^(\.\/|\/+)/,'');
+    return `https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/${encodeURIComponent(appid)}/${clean}`;
+  }
+
+  async function fetchInfo(appid){
+    const url = apiBase + encodeURIComponent(appid);
+    setStatus('正在请求 API：' + url);
+    const resp = await fetch(url, {cache:'no-store'});
+    if(!resp.ok) throw new Error('网络返回 ' + resp.status + ' ' + resp.statusText);
+    return await resp.json();
+  }
+
+  function showImages(urls){
+    grid.innerHTML = '';
+    if(urls.length === 0){
+      grid.innerHTML = '<div style="color:var(--muted)">没有识别到图片</div>';
+      return;
+    }
+
+    const categories = {}; // key = "宽x高"
+
+    for(const u of urls){
+      const card = document.createElement('div');
+      card.className = 'card';
+
+      const img = document.createElement('img');
+      img.className = 'thumb';
+      img.src = u;
+      img.alt = u;
+      img.loading = 'lazy';
+
+      img.onmouseover = () => { img.style.objectFit = 'contain'; img.style.height = 'auto'; img.style.maxHeight = '500px'; };
+      img.onmouseout = () => { img.style.objectFit = 'cover'; img.style.height = '120px'; img.style.maxHeight = ''; };
+
+      img.onerror = () => { img.src = ''; img.style.background = 'linear-gradient(45deg, rgba(255,255,255,0.01), rgba(255,255,255,0.02))'; img.style.filter = 'grayscale(0.3)'; img.title = '加载失败'; };
+
+      img.onload = () => {
+        const res = `${img.naturalWidth}x${img.naturalHeight}`;
+        if(!categories[res]) categories[res] = [];
+        const cardClone = card.cloneNode(false);
+        cardClone.className = 'card';
+        const imgClone = img.cloneNode(true);
+        cardClone.appendChild(imgClone);
+
+        const lang = (u.match(/(schinese|tchinese|english|japanese|koreana|french|german|spanish)/i) || ['未标注'])[0];
+        const meta = document.createElement('div');
+        meta.className = 'meta';
+        meta.innerHTML = `<div>分辨率: ${res} | 语言: ${lang}</div><div>${u}</div>`;
+        cardClone.appendChild(meta);
+
+        const actions = document.createElement('div');
+        actions.className = 'actions';
+
+        const open = document.createElement('button');
+        open.className = 'small';
+        open.textContent = '打开';
+        open.onclick = () => window.open(u, '_blank');
+
+        const copy = document.createElement('button');
+        copy.className = 'small';
+        copy.textContent = '复制链接';
+        copy.onclick = async () => {
+          await navigator.clipboard.writeText(u);
+          setStatus('已复制单个链接到剪贴板');
+        };
+
+        const dl = document.createElement('button');
+        dl.className = 'small';
+        dl.textContent = '下载';
+        dl.onclick = () => {
+          const a = document.createElement('a');
+          a.href = u;
+          a.download = u.split('/').pop();
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+        };
+
+        actions.appendChild(open);
+        actions.appendChild(copy);
+        actions.appendChild(dl);
+        cardClone.appendChild(actions);
+
+        categories[res].push(cardClone);
+
+        renderCategories();
+      };
+    }
+
+    function renderCategories(){
+      grid.innerHTML = '';
+      for(const res in categories){
+        const wrapper = document.createElement('div');
+        wrapper.className = 'category';
+        const title = document.createElement('h3');
+        title.textContent = `分辨率: ${res} （${categories[res].length} 张）`;
+        wrapper.appendChild(title);
+
+        const cg = document.createElement('div');
+        cg.className = 'card-grid';
+        for(const card of categories[res]) cg.appendChild(card);
+        wrapper.appendChild(cg);
+
+        grid.appendChild(wrapper);
+      }
+    }
+  }
+
+  async function handleQuery(){
+    const appid = appInput.value.trim();
+    if(!appid){ setStatus('请先输入 App ID', true); return; }
+    setStatus('开始识别（请求 API 并解析 JSON）...');
+    urlsBox.value = '';
+    grid.innerHTML = '';
+    try{
+      const json = await fetchInfo(appid);
+      setStatus('API 返回，正在分析 JSON ...');
+      const candidates = findImageCandidates(json);
+      setStatus(`识别到 ${candidates.length} 条候选路径，构建完整 URL 并去重...`);
+      const full = candidates.map(c => buildFullUrl(appid, c));
+      const unique = [...new Set(full)];
+      const finalList = unique.filter(Boolean);
+      if(finalList.length === 0){
+        setStatus('没有识别到图片链接。', true);
+        return;
+      }
+      urlsBox.value = finalList.join('\n');
+      showImages(finalList);
+      setStatus(`完成 — 共 ${finalList.length} 个链接。`);
+    }catch(err){
+      let msg = err.message || String(err);
+      if(msg.includes('Failed to fetch') || msg.includes('NetworkError') || msg.includes('TypeError')) {
+        msg = '网络或跨域错误（CORS）。' + msg;
+      }
+      setStatus(msg, true);
+      console.error(err);
+    }
+  }
+
+  goBtn.addEventListener('click', handleQuery);
+  appInput.addEventListener('keydown', (e)=>{ if(e.key === 'Enter') handleQuery(); });
+
+  copyAllBtn.addEventListener('click', async ()=>{
+    const text = urlsBox.value.trim();
+    if(!text) { setStatus('当前没有链接可复制', true); return; }
+    try{
+      await navigator.clipboard.writeText(text);
+      setStatus('已复制全部链接到剪贴板');
+    }catch(e){
+      setStatus('复制失败：' + (e.message || e), true);
+    }
+  });
+
+  exportTxtBtn.addEventListener('click', ()=>{
+    const text = urlsBox.value.trim();
+    if(!text){ setStatus('没有链接可导出', true); return; }
+    const blob = new Blob([text], {type:'text/plain;charset=utf-8'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `steam_${appInput.value || 'app'}_images.txt`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setStatus('已生成 txt 下载');
+  });
+
+  refreshImgsBtn.addEventListener('click', ()=>{
+    const txt = urlsBox.value.trim();
+    if(!txt) { setStatus('没有链接可刷新', true); return; }
+    const arr = txt.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+    showImages(arr);
+    setStatus('已刷新图片显示');
+  });
+
+})();
+</script>
+</body>
+</html>
