@@ -196,7 +196,7 @@
 
     const categories = {}; // key = "宽x高"
 
-    for(const u of urls){
+    urls.forEach(u => {
       const card = document.createElement('div');
       card.className = 'card';
 
@@ -214,6 +214,7 @@
       img.onload = () => {
         const res = `${img.naturalWidth}x${img.naturalHeight}`;
         if(!categories[res]) categories[res] = [];
+
         const cardClone = card.cloneNode(false);
         cardClone.className = 'card';
         const imgClone = img.cloneNode(true);
@@ -259,10 +260,9 @@
         cardClone.appendChild(actions);
 
         categories[res].push(cardClone);
-
         renderCategories();
       };
-    }
+    });
 
     function renderCategories(){
       grid.innerHTML = '';
@@ -302,7 +302,7 @@
         return;
       }
       urlsBox.value = finalList.join('\n');
-      showImages(finalList); // 自动显示图片，不需要再点刷新
+      showImages(finalList); // ✅ 自动展示图片
       setStatus(`完成 — 共 ${finalList.length} 个链接。`);
     }catch(err){
       let msg = err.message || String(err);
@@ -349,7 +349,7 @@
     setStatus('已刷新图片显示');
   });
 
-  // 支持 URL 参数自动填充并查询
+  // ✅ 支持 URL 参数自动填充并查询
   const params = new URLSearchParams(location.search);
   const appidParam = params.get("appid");
   if(appidParam) {
