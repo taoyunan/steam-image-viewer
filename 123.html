@@ -36,7 +36,7 @@
       outline:none;
     }
     button{
-      padding:10px 12px;
+      padding:8px 12px;
       border-radius:8px;
       border:0;
       background:var(--accent);
@@ -49,14 +49,20 @@
     button.ghost{ background:transparent; color:var(--muted); border:1px solid rgba(255,255,255,0.08); }
     .status{color:var(--muted);font-size:13px;margin-bottom:10px}
     .category{
-      margin-bottom:32px;
+      margin-bottom:24px;
       padding:12px;
       border-radius:12px;
       background:rgba(255,255,255,0.03);
       box-shadow:0 4px 12px rgba(0,0,0,0.4);
     }
+    .category-header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      margin-bottom:12px;
+    }
     .category h3{
-      margin:0 0 12px;
+      margin:0;
       font-size:16px;
       font-weight:bold;
       color:#fff;
@@ -64,6 +70,15 @@
       display:inline-block;
       padding:4px 10px;
       border-radius:6px;
+    }
+    .toggle-btn{
+      font-size:12px;
+      padding:4px 8px;
+      background:transparent;
+      border:1px solid rgba(255,255,255,0.2);
+      color:var(--muted);
+      border-radius:6px;
+      cursor:pointer;
     }
     .card-grid{display:grid;grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));gap:14px;}
     .card{
@@ -74,7 +89,7 @@
       box-shadow: 0 6px 20px rgba(0,0,0,0.4);
       display:flex;
       flex-direction:column;
-      gap:8px;
+      gap:6px;
       align-items:center;
       transition:transform 0.2s ease;
     }
@@ -87,8 +102,8 @@
       background: var(--glass);
       transition: all 0.3s ease;
     }
-    .meta{width:100%;font-size:13px;color:var(--muted);word-break:break-all}
-    .actions{display:flex;gap:8px;width:100%;flex-wrap:wrap;}
+    .meta{width:100%;font-size:13px;color:var(--muted);text-align:center}
+    .actions{display:flex;gap:8px;width:100%;flex-wrap:wrap;justify-content:center}
     .small{font-size:12px;padding:6px 8px;border-radius:8px;background:transparent;color:var(--muted);border:1px solid rgba(255,255,255,0.08);cursor:pointer;}
     textarea{width:100%;height:160px;background:var(--card);border-radius:8px;padding:10px;color:inherit;border:1px solid rgba(255,255,255,0.08)}
     footer{margin-top:12px;color:var(--muted);font-size:13px}
@@ -197,34 +212,30 @@
     const categories = {}; // key = "宽x高"
 
     urls.forEach(u => {
-      const card = document.createElement('div');
-      card.className = 'card';
-
-      const img = document.createElement('img');
-      img.className = 'thumb';
+      const img = new Image();
       img.src = u;
-      img.alt = u;
-      img.loading = 'lazy';
-
-      img.onmouseover = () => { img.style.objectFit = 'contain'; img.style.height = 'auto'; img.style.maxHeight = '500px'; };
-      img.onmouseout = () => { img.style.objectFit = 'cover'; img.style.height = '120px'; img.style.maxHeight = ''; };
-
-      img.onerror = () => { img.src = ''; img.style.background = 'linear-gradient(45deg, rgba(255,255,255,0.1), rgba(255,255,255,0.15))'; img.style.filter = 'grayscale(0.4)'; img.title = '加载失败'; };
-
       img.onload = () => {
         const res = `${img.naturalWidth}x${img.naturalHeight}`;
         if(!categories[res]) categories[res] = [];
 
-        const cardClone = card.cloneNode(false);
-        cardClone.className = 'card';
-        const imgClone = img.cloneNode(true);
-        cardClone.appendChild(imgClone);
+        const card = document.createElement('div');
+        card.className = 'card';
+
+        const imgEl = document.createElement('img');
+        imgEl.className = 'thumb';
+        imgEl.src = u;
+        imgEl.alt = u;
+        imgEl.loading = 'lazy';
+
+        imgEl.onmouseover = () => { imgEl.style.objectFit = 'contain'; imgEl.style.height = 'auto'; imgEl.style.maxHeight = '500px'; };
+        imgEl.onmouseout = () => { imgEl.style.objectFit = 'cover'; imgEl.style.height = '120px'; imgEl.style.maxHeight = ''; };
 
         const lang = (u.match(/(schinese|tchinese|english|japanese|koreana|french|german|spanish)/i) || ['未标注'])[0];
         const meta = document.createElement('div');
         meta.className = 'meta';
-        meta.innerHTML = `<div>分辨率: ${res} | 语言: ${lang}</div><div>${u}</div>`;
-        cardClone.appendChild(meta);
+        meta.textContent = `分辨率: ${res} | 语言: ${lang}`;
+        card.appendChild(imgEl);
+        card.appendChild(meta);
 
         const actions = document.createElement('div');
         actions.className = 'actions';
@@ -257,10 +268,9 @@
         actions.appendChild(open);
         actions.appendChild(copy);
         actions.appendChild(dl);
-        cardClone.appendChild(actions);
+        card.appendChild(actions);
 
-        categories[res].push(cardClone);
-
+        categories[res].push(card);
         renderCategories();
       };
     });
@@ -270,9 +280,30 @@
       for(const res in categories){
         const wrapper = document.createElement('div');
         wrapper.className = 'category';
+
+        const header = document.createElement('div');
+        header.className = 'category-header';
+
         const title = document.createElement('h3');
         title.textContent = `分辨率: ${res} （${categories[res].length} 张）`;
-        wrapper.appendChild(title);
+
+        const toggle = document.createElement('button');
+        toggle.className = 'toggle-btn';
+        toggle.textContent = '折叠';
+        toggle.onclick = () => {
+          const cg = wrapper.querySelector('.card-grid');
+          if(cg.style.display === 'none'){
+            cg.style.display = 'grid';
+            toggle.textContent = '折叠';
+          }else{
+            cg.style.display = 'none';
+            toggle.textContent = '展开';
+          }
+        };
+
+        header.appendChild(title);
+        header.appendChild(toggle);
+        wrapper.appendChild(header);
 
         const cg = document.createElement('div');
         cg.className = 'card-grid';
@@ -303,7 +334,7 @@
         return;
       }
       urlsBox.value = finalList.join('\n');
-      showImages(finalList); // ✅ 自动展示图片
+      showImages(finalList); // 自动展示图片
       setStatus(`完成 — 共 ${finalList.length} 个链接。`);
     }catch(err){
       let msg = err.message || String(err);
