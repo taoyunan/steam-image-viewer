@@ -260,6 +260,7 @@
         cardClone.appendChild(actions);
 
         categories[res].push(cardClone);
+
         renderCategories();
       };
     });
@@ -349,7 +350,7 @@
     setStatus('已刷新图片显示');
   });
 
-  // ✅ 支持 URL 参数自动填充并查询
+  // 支持 URL 参数自动填充并查询
   const params = new URLSearchParams(location.search);
   const appidParam = params.get("appid");
   if(appidParam) {
