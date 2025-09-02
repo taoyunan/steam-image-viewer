@@ -5,14 +5,101 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Steam Image Inspector</title>
   <style>
-    /* 保持原样，不变 */
+    :root{
+      --bg1:#0b1220;
+      --bg2:#162436;
+      --card:rgba(255,255,255,0.05);
+      --muted:#9aa4b2;
+      --accent:#06b6d4;
+      --glass: rgba(255,255,255,0.07);
+    }
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      background: linear-gradient(160deg,var(--bg1) 0%, var(--bg2) 100%);
+      color:#e6eef6;
+      padding:20px;
+      box-sizing:border-box;
+    }
+    .container{ max-width:1100px; margin:0 auto; }
+    header{ display:flex; align-items:center; gap:16px; margin-bottom:18px; }
+    h1{font-size:22px;margin:0;color:var(--accent)}
+    .controls{ display:flex; gap:8px; align-items:center; margin-bottom:12px; flex-wrap:wrap; }
+    input[type="text"]{
+      padding:10px 12px;
+      border-radius:8px;
+      border:1px solid rgba(255,255,255,0.08);
+      background:var(--card);
+      color:inherit;
+      min-width:200px;
+      outline:none;
+    }
+    button{
+      padding:10px 12px;
+      border-radius:8px;
+      border:0;
+      background:var(--accent);
+      color:#052026;
+      font-weight:600;
+      cursor:pointer;
+      transition:all 0.2s ease;
+    }
+    button:hover{transform:scale(1.05)}
+    button.ghost{ background:transparent; color:var(--muted); border:1px solid rgba(255,255,255,0.08); }
+    .status{color:var(--muted);font-size:13px;margin-bottom:10px}
+    .category{
+      margin-bottom:32px;
+      padding:12px;
+      border-radius:12px;
+      background:rgba(255,255,255,0.03);
+      box-shadow:0 4px 12px rgba(0,0,0,0.4);
+    }
+    .category h3{
+      margin:0 0 12px;
+      font-size:16px;
+      font-weight:bold;
+      color:#fff;
+      background:var(--accent);
+      display:inline-block;
+      padding:4px 10px;
+      border-radius:6px;
+    }
+    .card-grid{display:grid;grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));gap:14px;}
+    .card{
+      background: var(--card);
+      padding:8px;
+      border-radius:12px;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      align-items:center;
+      transition:transform 0.2s ease;
+    }
+    .card:hover{transform:translateY(-4px)}
+    .thumb{
+      width:100%;
+      height:120px;
+      object-fit:cover;
+      border-radius:8px;
+      background: var(--glass);
+      transition: all 0.3s ease;
+    }
+    .meta{width:100%;font-size:13px;color:var(--muted);word-break:break-all}
+    .actions{display:flex;gap:8px;width:100%;flex-wrap:wrap;}
+    .small{font-size:12px;padding:6px 8px;border-radius:8px;background:transparent;color:var(--muted);border:1px solid rgba(255,255,255,0.08);cursor:pointer;}
+    textarea{width:100%;height:160px;background:var(--card);border-radius:8px;padding:10px;color:inherit;border:1px solid rgba(255,255,255,0.08)}
+    footer{margin-top:12px;color:var(--muted);font-size:13px}
+    .hint{font-size:13px;color:var(--muted)}
   </style>
 </head>
 <body>
   <div class="container">
     <header>
       <h1>Steam Image Inspector</h1>
-      <div class="hint">输入 App ID → 查询 API → 识别图片并生成完整链接</div>
+      <div class="hint">输入 App ID → 自动识别并展示图片</div>
     </header>
 
     <div class="controls">
@@ -40,7 +127,7 @@
     </div>
 
     <footer>
-      <div class="hint">注意：如果 API 在浏览器端存在跨域限制（CORS），浏览器会报错。遇到这种情况请使用你自己的后端代理或公开的 CORS proxy。</div>
+      <div class="hint">提示：如遇 CORS 报错，请使用代理。</div>
     </footer>
   </div>
 
@@ -122,7 +209,7 @@
       img.onmouseover = () => { img.style.objectFit = 'contain'; img.style.height = 'auto'; img.style.maxHeight = '500px'; };
       img.onmouseout = () => { img.style.objectFit = 'cover'; img.style.height = '120px'; img.style.maxHeight = ''; };
 
-      img.onerror = () => { img.src = ''; img.style.background = 'linear-gradient(45deg, rgba(255,255,255,0.01), rgba(255,255,255,0.02))'; img.style.filter = 'grayscale(0.3)'; img.title = '加载失败'; };
+      img.onerror = () => { img.src = ''; img.style.background = 'linear-gradient(45deg, rgba(255,255,255,0.1), rgba(255,255,255,0.15))'; img.style.filter = 'grayscale(0.4)'; img.title = '加载失败'; };
 
       img.onload = () => {
         const res = `${img.naturalWidth}x${img.naturalHeight}`;
@@ -215,7 +302,7 @@
         return;
       }
       urlsBox.value = finalList.join('\n');
-      showImages(finalList);
+      showImages(finalList); // 自动显示图片，不需要再点刷新
       setStatus(`完成 — 共 ${finalList.length} 个链接。`);
     }catch(err){
       let msg = err.message || String(err);
@@ -262,7 +349,7 @@
     setStatus('已刷新图片显示');
   });
 
-  // 新增：支持 URL 参数自动填充并查询
+  // 支持 URL 参数自动填充并查询
   const params = new URLSearchParams(location.search);
   const appidParam = params.get("appid");
   if(appidParam) {
