@@ -16,7 +16,6 @@
     font-family: 'Roboto Slab', "微软雅黑", sans-serif;
     display: flex;
     flex-direction: column;
-    /* 恢复为居中对齐 */
     align-items: center;
     padding: 25px 15px 40px;
     min-height: 100vh;
@@ -126,7 +125,7 @@
     box-shadow: 0 0 25px #2563eb44 inset;
     border-radius: 12px;
     cursor: grab;
-    margin: 0 auto; /* 确保在伸缩容器内也居中 */
+    margin: 0 auto;
   }
   canvas { display: block; user-select: none; border-radius: 12px; }
   .slider-container, .main-container .controls {
@@ -169,7 +168,6 @@
   #error { color: #ef4444; }
   #loading { color: #60a5fa; }
   
-  /* --- 教程样式 --- */
   #tutorial {
     position: fixed;
     top: 20px;
@@ -215,7 +213,6 @@
       box-shadow: none;
   }
 
-  /* --- 图片探查器样式 --- */
   #imageInspector {
     text-align: left;
     margin-top: 36px;
@@ -240,7 +237,6 @@
   .thumb {
     width: 100%;
     height: 120px;
-    /* 默认 contain */
     object-fit: contain;
     border-radius: 8px;
     background: #121417;
@@ -255,7 +251,6 @@
 </head>
 <body>
 
-<!-- 教程默认隐藏 -->
 <div id="tutorial" class="hidden">
   <div class="tutorial-header">
     <h3>使用教程</h3>
@@ -278,14 +273,12 @@
         <button id="showTutorialBtn" title="显示教程">?</button>
     </div>
 
-    <!-- Steam ID 输入行 -->
     <div class="controls">
-      <input type="text" id="appId" placeholder="请输入 Steam App ID，例如：2962810" autocomplete="off" />
+      <input type="text" id="appId" placeholder="请输入 Steam App ID" autocomplete="off" />
       <button id="fetchBtn" style="margin-left: 12px;">获取并合成</button>
       <button id="saveBtn" disabled style="margin-left: 8px;">保存图片</button>
     </div>
 
-    <!-- 文字编辑行 -->
     <div class="controls">
       <textarea id="customText" placeholder="输入自定义文字（支持多行）"></textarea>
       <input type="color" id="textColor" value="#ffffff" title="文字颜色" />
@@ -344,11 +337,10 @@
 
 
 <script>
-  // ... (大部分JavaScript保持不变, 重点修改showImages和fetchData的提示) ...
   const API_BASE = "https://api.steamcmd.net/v1/info/";
   const IMG_BASE = "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/";
   const snapThreshold = 10;
-
+  // ... DOM Elements ...
   const canvas = document.getElementById("heroCanvas");
   const ctx = canvas.getContext("2d");
   const errorBox = document.getElementById("error");
@@ -363,7 +355,7 @@
   const urlsBox = document.getElementById("urlsBox");
   const gradientColorInput = document.getElementById("gradientColor");
   const gradientDirectionSelect = document.getElementById("gradientDirection");
-
+  // ... Global state variables ...
   let heroImg = new Image();
   let logoImg = new Image();
   let logoX = 0, logoY = 0, logoScale = 1;
@@ -415,7 +407,6 @@
   function snapToCenterX(objX, objW) { const centerX = (canvas.width - objW) / 2; return Math.abs(objX - centerX) < snapThreshold ? centerX : objX; }
   function snapToCenterY(objY, objH) { const centerY = (canvas.height - objH) / 2; return Math.abs(objY - centerY) < snapThreshold ? centerY : objY; }
 
-  // 事件监听
   canvas.addEventListener("mousedown", (e) => { const rect = canvas.getBoundingClientRect(); const mx = e.clientX - rect.left, my = e.clientY - rect.top; const logoW = logoImg.width * logoScale, logoH = logoImg.height * logoScale; ctx.font = `${textSize}px "${textFont}"`; const lines = customText.split("\n"); const textW = lines.length > 0 ? Math.max(...lines.map(line => ctx.measureText(line).width)) : 0; const textH = lines.length * (textSize + lineSpacing) - lineSpacing; if (e.shiftKey) { dragTarget = "both"; dragOffsetX = mx - logoX; dragOffsetY = my - logoY; } else if (logoImg.src && mx >= logoX && mx <= logoX + logoW && my >= logoY && my <= logoY + logoH) { dragTarget = "logo"; dragOffsetX = mx - logoX; dragOffsetY = my - logoY; } else if (customText && mx >= textX && mx <= textX + textW && my >= textY && my <= textY + textH) { dragTarget = "text"; dragOffsetX = mx - textX; dragOffsetY = my - textY; } if (dragTarget) { dragging = true; canvas.style.cursor = "grabbing"; } });
   canvas.addEventListener("mousemove", (e) => { if (!dragging) return; const rect = canvas.getBoundingClientRect(); const mx = e.clientX - rect.left, my = e.clientY - rect.top; const logoW = logoImg.width * logoScale, logoH = logoImg.height * logoScale; ctx.font = `${textSize}px "${textFont}"`; const lines = customText.split("\n"); const textW = lines.length > 0 ? Math.max(...lines.map(line => ctx.measureText(line).width)) : 0; const textH = lines.length * (textSize + lineSpacing) - lineSpacing; if (dragTarget === "logo" || dragTarget === "both") { let newX = mx - dragOffsetX; let newY = my - dragOffsetY; if(logoImg.src) { newX = snapToCenterX(newX, logoW); newY = snapToCenterY(newY, logoH); } if (dragTarget === "logo") { logoX = newX; logoY = newY; } else { let offsetX = newX - logoX, offsetY = newY - logoY; logoX = newX; logoY = newY; textX += offsetX; textY += offsetY; } } if (dragTarget === "text" && dragTarget !== "both") { let newX = mx - dragOffsetX; let newY = my - dragOffsetY; if(customText) { newX = snapToCenterX(newX, textW); newY = snapToCenterY(newY, textH); } textX = newX; textY = newY; } drawAll(); });
   ["mouseup","mouseleave"].forEach(evt => { canvas.addEventListener(evt, () => { dragging = false; dragTarget = null; canvas.style.cursor = "grab"; }); });
@@ -433,40 +424,14 @@
   document.getElementById('hideTutorialBtn').addEventListener('click', () => tutorialPanel.classList.add('hidden'));
   document.getElementById('showTutorialBtn').addEventListener('click', () => tutorialPanel.classList.remove('hidden'));
 
-  // 图片探查器功能
   function findImageCandidates(obj) { const results = new Set(); const imageRE = /\.(jpe?g|png|webp|gif)(\?|$)/i; function rec(v) { if (v == null) return; if (typeof v === 'string') { if (imageRE.test(v)) { results.add(v); } } else if (Array.isArray(v)) { for (const e of v) rec(e); } else if (typeof v === 'object') { for (const k in v) rec(v[k]); } } rec(obj); return [...results].map(s => s.split('#')[0].trim()).filter(Boolean); }
   function buildFullUrl(appid, candidate) { const trimmed = candidate.trim(); if (/^https?:\/\//i.test(trimmed)) return trimmed; const clean = trimmed.replace(/^(\.\/|\/+)/, ''); return `${IMG_BASE}${encodeURIComponent(appid)}/${clean}`; }
-  
-  // 更新showImages函数以显示加载提示
-  function showImages(urls) {
-    if (urls.length === 0) {
-      imageList.innerHTML = '<p>没有识别到任何图片资源。</p>';
-      return;
-    }
-    imageList.innerHTML = `<p style="color: #60a5fa; text-align: center;">正在加载 ${urls.length} 张图片尺寸...</p>`;
-    
-    const categories = {};
-    const promises = urls.map(u => new Promise(resolve => {
-        const img = new Image();
-        img.src = u;
-        img.onload = () => resolve({ u, res: `${img.naturalWidth}x${img.naturalHeight}` });
-        img.onerror = () => resolve({ u, res: '未知尺寸' });
-    }));
-
-    Promise.all(promises).then(results => {
-        results.forEach(({ u, res }) => {
-            if (!categories[res]) categories[res] = [];
-            categories[res].push(u);
-        });
-        renderCategories(categories);
-    });
-  }
+  function showImages(urls) { if (urls.length === 0) { imageList.innerHTML = '<p>没有识别到任何图片资源。</p>'; return; } imageList.innerHTML = `<p style="color: #60a5fa; text-align: center;">正在加载 ${urls.length} 张图片尺寸...</p>`; const categories = {}; const promises = urls.map(u => new Promise(resolve => { const img = new Image(); img.src = u; img.onload = () => resolve({ u, res: `${img.naturalWidth}x${img.naturalHeight}` }); img.onerror = () => resolve({ u, res: '未知尺寸' }); })); Promise.all(promises).then(results => { results.forEach(({ u, res }) => { if (!categories[res]) categories[res] = []; categories[res].push(u); }); renderCategories(categories); }); }
   function renderCategories(categories) { imageList.innerHTML = ''; Object.keys(categories).sort().reverse().forEach(res => { const urls = categories[res]; const wrapper = document.createElement('div'); wrapper.className = 'category'; const header = document.createElement('div'); header.className = 'category-header'; header.innerHTML = `<h4>分辨率: ${res} (${urls.length} 张)</h4><button class="toggle-btn">折叠</button>`; wrapper.appendChild(header); const cardGrid = document.createElement('div'); cardGrid.className = 'card-grid'; urls.forEach(u => { const langMatch = u.match(/(schinese|tchinese|english|japanese|koreana|french|german|spanish|latam)/i); const lang = langMatch ? langMatch[0] : '通用'; const card = document.createElement('div'); card.className = 'card'; card.innerHTML = `<img src="${u}" alt="image" class="thumb" loading="lazy" onclick="this.style.objectFit = this.style.objectFit === 'contain' ? 'cover' : 'contain'"><div class="meta">${lang}</div><div class="actions"><button data-url="${u}" class="open-btn">打开</button><button data-url="${u}" class="copy-btn">复制</button><button data-url="${u}" class="dl-btn">下载</button></div>`; cardGrid.appendChild(card); }); wrapper.appendChild(cardGrid); imageList.appendChild(wrapper); const toggleBtn = header.querySelector('.toggle-btn'); toggleBtn.onclick = () => { const isHidden = cardGrid.style.display === 'none'; cardGrid.style.display = isHidden ? 'grid' : 'none'; toggleBtn.textContent = isHidden ? '展开' : '折叠'; }; }); }
   imageList.addEventListener('click', e => { const target = e.target; const url = target.dataset.url; if (!url) return; if (target.classList.contains('open-btn')) { window.open(url, '_blank'); } else if (target.classList.contains('copy-btn')) { navigator.clipboard.writeText(url).then(() => { setLoading('链接已复制!'); setTimeout(clearLoading, 1500); }); } else if (target.classList.contains('dl-btn')) { const a = document.createElement('a'); a.href = url; a.download = url.split('/').pop().split('?')[0] || `image.jpg`; a.target = '_blank'; a.click(); } });
   document.getElementById('copyAllBtn').addEventListener('click', () => { if (!urlsBox.value) return; navigator.clipboard.writeText(urlsBox.value).then(() => { setLoading('全部链接已复制!'); setTimeout(clearLoading, 1500); }); });
   document.getElementById('exportTxtBtn').addEventListener('click', () => { if (!urlsBox.value) return; const blob = new Blob([urlsBox.value], {type:'text/plain;charset=utf-8'}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `steam_${document.getElementById("appId").value.trim()}_images.txt`; a.click(); URL.revokeObjectURL(a.href); });
 
-  // 主数据获取逻辑
   async function fetchData(appId) {
     clearError();
     setLoading("正在请求API...");
@@ -475,14 +440,12 @@
     imageInspector.style.display = 'none';
     imageList.innerHTML = '';
     urlsBox.value = '';
-
     try {
       const res = await fetch(API_BASE + appId);
       if (!res.ok) throw new Error(`API 请求失败: ${res.status}`);
       const json = await res.json();
       const appData = json.data?.[appId];
       if (!appData) throw new Error("未找到游戏数据");
-
       setLoading("正在加载拼图资源...");
       let gameName = appData.common?.name_localized?.sc_schinese || appData.common?.metacritic_name || appData.common?.name || "";
       customText = `3DM《${gameName}》专区`;
@@ -494,15 +457,12 @@
       if (!heroPath) throw new Error("未找到 library_hero 图片");
       const heroUrl = IMG_BASE + appId + "/" + heroPath;
       let logoUrl = logoPath ? IMG_BASE + appId + "/" + logoPath : `https://cdn.cloudflare.steamstatic.com/steam/apps/${appId}/header.jpg`;
-      
       heroImg = new Image(); heroImg.crossOrigin = "anonymous"; heroImg.src = heroUrl;
       logoImg = new Image(); logoImg.crossOrigin = "anonymous"; logoImg.src = logoUrl;
-      
       await Promise.all([
         new Promise((res, rej) => { heroImg.onload = res; heroImg.onerror = () => rej(new Error('背景图加载失败')); }),
         new Promise((res) => { logoImg.onload = res; logoImg.onerror = () => { logoImg.src = `https://cdn.cloudflare.steamstatic.com/steam/apps/${appId}/header.jpg`; logoImg.onload = res; logoImg.onerror = res; };}),
       ]);
-
       drawHero(heroImg);
       if(logoImg.complete && logoImg.naturalWidth > 0) {
         if (logoPath) {
@@ -512,7 +472,6 @@
             logoScale = (0.2 * canvas.width) / logoImg.width; logoX = canvas.width - logoImg.width * logoScale - 20; logoY = canvas.height - logoImg.height * logoScale - 20; scaleSlider.value = Math.round(logoScale * 100); scalePercent.textContent = `${Math.round(logoScale * 100)}%`; scaleSlider.disabled = false; saveBtn.disabled = false;
         }
       } else { logoImg.src = ''; scaleSlider.disabled = true; }
-
       ctx.font = `${textSize}px "${textFont}"`;
       const lines = customText.split("\n");
       const textW = Math.max(...lines.map(line => ctx.measureText(line).width));
@@ -520,11 +479,9 @@
       textX = (canvas.width - textW) / 2;
       textY = (canvas.height - textH) / 2 + 30;
       drawAll();
-
       setLoading("正在解析所有图片资源...");
       const candidates = findImageCandidates(json);
       const allImageUrls = [...new Set(candidates.map(c => buildFullUrl(appId, c)))];
-      
       imageInspector.style.display = 'block';
       if (allImageUrls.length > 0) {
         urlsBox.value = allImageUrls.join('\n');
@@ -544,6 +501,19 @@
     if (!id) { showError("请输入有效的 Steam App ID"); return; }
     fetchData(id);
   });
+
+  // ========== 新增：页面加载时自动处理 URL 参数 ==========
+  (function() {
+    const params = new URLSearchParams(window.location.search);
+    const appIdFromUrl = params.get("appid");
+    if (appIdFromUrl) {
+        console.log("从 URL 中找到 AppID:", appIdFromUrl);
+        document.getElementById("appId").value = appIdFromUrl;
+        fetchData(appIdFromUrl);
+    }
+  })();
+  // ======================================================
+
 </script>
 </body>
 </html>
