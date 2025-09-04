@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Steam 拼图与图片探查工具</title>
+<title>fxh自己的Steamdb</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Roboto+Slab&display=swap');
   /* 重置 */
@@ -227,13 +227,18 @@
   #imageInspector h3 { margin: 0 0 12px; color: #60a5fa; font-weight: 700; text-shadow: 0 0 10px #60a5faaa; }
   .inspector-controls { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
   #urlsBox { width: 100%; min-height: 120px; resize: vertical; margin-bottom: 15px; }
+  .url-actions-container { margin-top: 25px; }
   .category { margin-bottom: 20px; padding: 15px; border-radius: 12px; background: rgba(0,0,0,0.2); border: 1px solid #2e3a59; }
   .category-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
   .category-header h4 { margin: 0; font-size: 16px; font-weight: bold; color: #fff; background: #60a5fa; display: inline-block; padding: 4px 10px; border-radius: 6px; }
   .toggle-btn { font-size: 12px; padding: 4px 10px; background: transparent; border: 1px solid #4b6cb7; color: #bbb; box-shadow: none; }
   .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
-  .card { background: #23262a; padding: 8px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); display: flex; flex-direction: column; gap: 8px; align-items: center; transition: transform 0.2s ease, box-shadow 0.2s ease; }
+  .card { background: #23262a; padding: 8px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); display: flex; flex-direction: column; gap: 8px; align-items: center; transition: all 0.2s ease; border: 2px solid transparent; }
   .card:hover { transform: translateY(-4px); box-shadow: 0 6px 20px rgba(96,165,250,0.3); }
+  .card.highlight-schinese {
+    border-color: #60a5fa;
+    box-shadow: 0 0 15px rgba(96, 165, 250, 0.6);
+  }
   .thumb {
     width: 100%;
     height: 120px;
@@ -258,6 +263,7 @@
   </div>
   <ul>
     <li>输入 Steam App ID，点击“获取并合成”加载背景和 Logo。</li>
+    <li>Logo 位置会根据官方数据自动设定。</li>
     <li>默认文字会自动填充，可自行修改（支持多行）。</li>
     <li>可以调整文字颜色、字号、字体和行间距。</li>
     <li>用鼠标拖动 Logo 或文字改变位置。</li>
@@ -327,16 +333,21 @@
 
 <div id="imageInspector" style="display: none;">
   <h3>图片探查器</h3>
-  <div class="inspector-controls">
-    <button id="copyAllBtn">复制全部链接</button>
-    <button id="exportTxtBtn">导出为 .txt</button>
-  </div>
-  <textarea id="urlsBox" readonly placeholder="这里会显示识别到的所有图片链接..."></textarea>
+  
   <div id="imageList"></div>
+
+  <div class="url-actions-container">
+    <div class="inspector-controls">
+      <button id="copyAllBtn">复制全部链接</button>
+      <button id="exportTxtBtn">导出为 .txt</button>
+    </div>
+    <textarea id="urlsBox" readonly placeholder="这里会显示识别到的所有图片链接..."></textarea>
+  </div>
 </div>
 
 
 <script>
+  // ... (大部分JavaScript保持不变, 重点修改 initLogoPosition 和 fetchData) ...
   const API_BASE = "https://api.steamcmd.net/v1/info/";
   const IMG_BASE = "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/";
   const snapThreshold = 10;
@@ -403,7 +414,39 @@
   function drawLogo() { if (!logoImg.src || !logoImg.complete) return; ctx.drawImage(logoImg, logoX, logoY, logoImg.width * logoScale, logoImg.height * logoScale); }
   function drawText() { if (!customText) return; ctx.font = `${textSize}px "${textFont}"`; ctx.fillStyle = textColor; ctx.textBaseline = "top"; const lines = customText.split("\n"); lines.forEach((line, i) => { ctx.fillText(line, textX, textY + i * (textSize + lineSpacing)); }); }
   function drawAll() { drawHero(heroImg); drawLogo(); drawText(); }
-  function initLogoPosition(logoPos) { const cw = canvas.width, ch = canvas.height; logoScale = (0.2 * cw) / logoImg.width; const widthPct = parseFloat(logoPos.width_pct); const heightPct = parseFloat(logoPos.height_pct); const pinned = (logoPos.pinned_position || "").toLowerCase(); const logoW = logoImg.width * logoScale; const logoH = logoImg.height * logoScale; logoX = pinned.includes("right") ? cw - (widthPct / 100) * cw - logoW : (widthPct / 100) * cw; logoY = pinned.includes("bottom") ? ch - (heightPct / 100) * ch - logoH : (heightPct / 100) * ch; scaleSlider.value = Math.round(logoScale * 100); scalePercent.textContent = `${Math.round(logoScale * 100)}%`; scaleSlider.disabled = false; saveBtn.disabled = false; }
+  
+  // 更新后的 initLogoPosition 函数
+  function initLogoPosition(logoPos) {
+    const cw = canvas.width, ch = canvas.height;
+    // 缩放比例是一个经验值，Steam API没提供，这里我们假设Logo宽度约为画布的30%
+    logoScale = (0.3 * cw) / logoImg.width;
+    
+    const widthPct = parseFloat(logoPos.width_pct);
+    const heightPct = parseFloat(logoPos.height_pct);
+    const pinned = (logoPos.pinned_position || "BottomRight").toLowerCase();
+
+    const logoW = logoImg.width * logoScale;
+    const logoH = logoImg.height * logoScale;
+
+    // 根据锚点计算位置
+    if (pinned.includes("right")) {
+        logoX = cw - (widthPct / 100) * cw - logoW;
+    } else { // left
+        logoX = (widthPct / 100) * cw;
+    }
+
+    if (pinned.includes("bottom")) {
+        logoY = ch - (heightPct / 100) * ch - logoH;
+    } else { // top
+        logoY = (heightPct / 100) * ch;
+    }
+
+    scaleSlider.value = Math.round(logoScale * 100);
+    scalePercent.textContent = `${Math.round(logoScale * 100)}%`;
+    scaleSlider.disabled = false;
+    saveBtn.disabled = false;
+  }
+
   function snapToCenterX(objX, objW) { const centerX = (canvas.width - objW) / 2; return Math.abs(objX - centerX) < snapThreshold ? centerX : objX; }
   function snapToCenterY(objY, objH) { const centerY = (canvas.height - objH) / 2; return Math.abs(objY - centerY) < snapThreshold ? centerY : objY; }
 
@@ -427,7 +470,7 @@
   function findImageCandidates(obj) { const results = new Set(); const imageRE = /\.(jpe?g|png|webp|gif)(\?|$)/i; function rec(v) { if (v == null) return; if (typeof v === 'string') { if (imageRE.test(v)) { results.add(v); } } else if (Array.isArray(v)) { for (const e of v) rec(e); } else if (typeof v === 'object') { for (const k in v) rec(v[k]); } } rec(obj); return [...results].map(s => s.split('#')[0].trim()).filter(Boolean); }
   function buildFullUrl(appid, candidate) { const trimmed = candidate.trim(); if (/^https?:\/\//i.test(trimmed)) return trimmed; const clean = trimmed.replace(/^(\.\/|\/+)/, ''); return `${IMG_BASE}${encodeURIComponent(appid)}/${clean}`; }
   function showImages(urls) { if (urls.length === 0) { imageList.innerHTML = '<p>没有识别到任何图片资源。</p>'; return; } imageList.innerHTML = `<p style="color: #60a5fa; text-align: center;">正在加载 ${urls.length} 张图片尺寸...</p>`; const categories = {}; const promises = urls.map(u => new Promise(resolve => { const img = new Image(); img.src = u; img.onload = () => resolve({ u, res: `${img.naturalWidth}x${img.naturalHeight}` }); img.onerror = () => resolve({ u, res: '未知尺寸' }); })); Promise.all(promises).then(results => { results.forEach(({ u, res }) => { if (!categories[res]) categories[res] = []; categories[res].push(u); }); renderCategories(categories); }); }
-  function renderCategories(categories) { imageList.innerHTML = ''; Object.keys(categories).sort().reverse().forEach(res => { const urls = categories[res]; const wrapper = document.createElement('div'); wrapper.className = 'category'; const header = document.createElement('div'); header.className = 'category-header'; header.innerHTML = `<h4>分辨率: ${res} (${urls.length} 张)</h4><button class="toggle-btn">折叠</button>`; wrapper.appendChild(header); const cardGrid = document.createElement('div'); cardGrid.className = 'card-grid'; urls.forEach(u => { const langMatch = u.match(/(schinese|tchinese|english|japanese|koreana|french|german|spanish|latam)/i); const lang = langMatch ? langMatch[0] : '通用'; const card = document.createElement('div'); card.className = 'card'; card.innerHTML = `<img src="${u}" alt="image" class="thumb" loading="lazy" onclick="this.style.objectFit = this.style.objectFit === 'contain' ? 'cover' : 'contain'"><div class="meta">${lang}</div><div class="actions"><button data-url="${u}" class="open-btn">打开</button><button data-url="${u}" class="copy-btn">复制</button><button data-url="${u}" class="dl-btn">下载</button></div>`; cardGrid.appendChild(card); }); wrapper.appendChild(cardGrid); imageList.appendChild(wrapper); const toggleBtn = header.querySelector('.toggle-btn'); toggleBtn.onclick = () => { const isHidden = cardGrid.style.display === 'none'; cardGrid.style.display = isHidden ? 'grid' : 'none'; toggleBtn.textContent = isHidden ? '展开' : '折叠'; }; }); }
+  function renderCategories(categories) { imageList.innerHTML = ''; const sortedKeys = Object.keys(categories).sort((a, b) => { if (a === '未知尺寸') return 1; if (b === '未知尺寸') return -1; const [wA, hA] = a.split('x').map(Number); const [wB, hB] = b.split('x').map(Number); const ratioA = hA > 0 ? wA / hA : 0; const ratioB = hB > 0 ? wB / hB : 0; return ratioB - ratioA; }); sortedKeys.forEach(res => { const urls = categories[res]; const wrapper = document.createElement('div'); wrapper.className = 'category'; const header = document.createElement('div'); header.className = 'category-header'; header.innerHTML = `<h4>分辨率: ${res} (${urls.length} 张)</h4><button class="toggle-btn">折叠</button>`; wrapper.appendChild(header); const cardGrid = document.createElement('div'); cardGrid.className = 'card-grid'; urls.forEach(u => { const card = document.createElement('div'); card.className = 'card'; if (u.toLowerCase().includes('schinese')) { card.classList.add('highlight-schinese'); } const langMatch = u.match(/(schinese|tchinese|english|japanese|koreana|french|german|spanish|latam)/i); const lang = langMatch ? langMatch[0] : '通用'; card.innerHTML = `<img src="${u}" alt="image" class="thumb" loading="lazy" onclick="this.style.objectFit = this.style.objectFit === 'contain' ? 'cover' : 'contain'"><div class="meta">${lang}</div><div class="actions"><button data-url="${u}" class="open-btn">打开</button><button data-url="${u}" class="copy-btn">复制</button><button data-url="${u}" class="dl-btn">下载</button></div>`; cardGrid.appendChild(card); }); wrapper.appendChild(cardGrid); imageList.appendChild(wrapper); const toggleBtn = header.querySelector('.toggle-btn'); toggleBtn.onclick = () => { const isHidden = cardGrid.style.display === 'none'; cardGrid.style.display = isHidden ? 'grid' : 'none'; toggleBtn.textContent = isHidden ? '展开' : '折叠'; }; }); }
   imageList.addEventListener('click', e => { const target = e.target; const url = target.dataset.url; if (!url) return; if (target.classList.contains('open-btn')) { window.open(url, '_blank'); } else if (target.classList.contains('copy-btn')) { navigator.clipboard.writeText(url).then(() => { setLoading('链接已复制!'); setTimeout(clearLoading, 1500); }); } else if (target.classList.contains('dl-btn')) { const a = document.createElement('a'); a.href = url; a.download = url.split('/').pop().split('?')[0] || `image.jpg`; a.target = '_blank'; a.click(); } });
   document.getElementById('copyAllBtn').addEventListener('click', () => { if (!urlsBox.value) return; navigator.clipboard.writeText(urlsBox.value).then(() => { setLoading('全部链接已复制!'); setTimeout(clearLoading, 1500); }); });
   document.getElementById('exportTxtBtn').addEventListener('click', () => { if (!urlsBox.value) return; const blob = new Blob([urlsBox.value], {type:'text/plain;charset=utf-8'}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `steam_${document.getElementById("appId").value.trim()}_images.txt`; a.click(); URL.revokeObjectURL(a.href); });
@@ -464,14 +507,24 @@
         new Promise((res) => { logoImg.onload = res; logoImg.onerror = () => { logoImg.src = `https://cdn.cloudflare.steamstatic.com/steam/apps/${appId}/header.jpg`; logoImg.onload = res; logoImg.onerror = res; };}),
       ]);
       drawHero(heroImg);
+
       if(logoImg.complete && logoImg.naturalWidth > 0) {
-        if (logoPath) {
-            const logoPos = assetsFull.library_logo?.logo_position || appData.common.library_assets?.logo_position;
-            if (logoPos) initLogoPosition(logoPos); else { logoScale = (0.2 * canvas.width) / logoImg.width; logoX = canvas.width - logoImg.width * logoScale - 20; logoY = canvas.height - logoImg.height * logoScale - 20; scaleSlider.value = Math.round(logoScale * 100); scalePercent.textContent = `${Math.round(logoScale * 100)}%`; scaleSlider.disabled = false; saveBtn.disabled = false; }
+        // 核心改动：优先使用 logo_position
+        const logoPos = assetsFull.library_logo?.logo_position;
+        if (logoPos) {
+            initLogoPosition(logoPos);
         } else {
-            logoScale = (0.2 * canvas.width) / logoImg.width; logoX = canvas.width - logoImg.width * logoScale - 20; logoY = canvas.height - logoImg.height * logoScale - 20; scaleSlider.value = Math.round(logoScale * 100); scalePercent.textContent = `${Math.round(logoScale * 100)}%`; scaleSlider.disabled = false; saveBtn.disabled = false;
+            // Fallback to default position if no logo_position data
+            logoScale = (0.2 * canvas.width) / logoImg.width;
+            logoX = canvas.width - logoImg.width * logoScale - 20;
+            logoY = canvas.height - logoImg.height * logoScale - 20;
+            scaleSlider.value = Math.round(logoScale * 100);
+            scalePercent.textContent = `${Math.round(logoScale * 100)}%`;
+            scaleSlider.disabled = false;
+            saveBtn.disabled = false;
         }
       } else { logoImg.src = ''; scaleSlider.disabled = true; }
+
       ctx.font = `${textSize}px "${textFont}"`;
       const lines = customText.split("\n");
       const textW = Math.max(...lines.map(line => ctx.measureText(line).width));
@@ -502,8 +555,7 @@
     fetchData(id);
   });
 
-  // ========== 新增：页面加载时自动处理 URL 参数 ==========
-  (function() {
+  window.addEventListener('DOMContentLoaded', () => {
     const params = new URLSearchParams(window.location.search);
     const appIdFromUrl = params.get("appid");
     if (appIdFromUrl) {
@@ -511,8 +563,7 @@
         document.getElementById("appId").value = appIdFromUrl;
         fetchData(appIdFromUrl);
     }
-  })();
-  // ======================================================
+  });
 
 </script>
 </body>
