@@ -4,6 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>枫小痕自己的steamdb</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css" />
 <style>
  @import url('https://fonts.googleapis.com/css2?family=Roboto+Slab&display=swap');
  /* ... CSS ... */
@@ -17,11 +18,14 @@
  width: 100%; max-width: 1200px;
  }
  .header-container {
- display: flex; align-items: center; gap: 15px; margin-bottom: 20px;
+ display: flex; align-items: center; gap: 15px; margin-bottom: 20px; width: 100%; max-width: 1200px;
  }
  h1 {
  margin: 0; font-weight: 700; font-size: 2.4rem; letter-spacing: 2px;
  color: #60a5fa; text-shadow: 0 0 10px #60a5faaa;
+ }
+ .header-controls {
+    margin-left: auto; display: flex; align-items: center; gap: 20px;
  }
  .controls {
  display: flex; gap: 12px; margin-bottom: 15px;
@@ -88,7 +92,7 @@
  #error { color: #ef4444; }
  #loading { color: #60a5fa; }
  #tutorial {
- position: fixed; top: 20px; right: 20px; width: 320px; z-index: 1000;
+ position: fixed; top: 20px; right: 20px; width: 380px; z-index: 1000;
  padding: 20px 25px; background: #1e2433ee; backdrop-filter: blur(8px);
  border-radius: 14px; font-size: 14px; line-height: 1.7; border: 1px solid #2e3a59;
  box-shadow: 0 8px 30px rgba(0,0,0,0.4); max-height: calc(100vh - 40px);
@@ -97,10 +101,13 @@
  #tutorial.hidden {
  opacity: 0; transform: translateX(20px); pointer-events: none;
  }
- .tutorial-header { display: flex; justify-content: space-between; align-items: center; }
- #tutorial h3 { margin: 0 0 12px; color: #60a5fa; font-weight: 700; text-shadow: 0 0 10px #60a5faaa; }
+ .tutorial-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+ #tutorial h2 { margin: 0; color: #60a5fa; font-weight: 700; text-shadow: 0 0 10px #60a5faaa; font-size: 20px; }
+ #tutorial h3 { margin: 20px 0 10px; color: #82b9ff; font-weight: 700; border-bottom: 1px solid #2e3a59; padding-bottom: 5px;}
  #tutorial ul { list-style-type: disc; padding-left: 20px; color: #ccc; margin: 0; }
  #tutorial ul li { margin-bottom: 10px; }
+ #tutorial p { margin: 10px 0; }
+ #tutorial code, #tutorial kbd { background: #121417; padding: 2px 5px; border-radius: 4px; font-family: monospace; color: #ffb86c; border: 1px solid #444; }
  .toggle-tutorial-btn {
  background: none; border: 1px solid #4b6cb7; color: #bbb;
  padding: 4px 10px; font-size: 12px; cursor: pointer; box-shadow: none;
@@ -114,7 +121,7 @@
  border-radius: 14px; font-size: 15px; line-height: 1.7;
  box-shadow: 0 0 20px #1e2433; border: 1px solid #2e3a59;
  }
- #imageInspector h3 { margin: 0 0 12px; color: #60a5fa; font-weight: 700; text-shadow: 0 0 10px #60a5faaa; }
+ #imageInspector h3 { margin: 0 0 15px; color: #60a5fa; font-weight: 700; text-shadow: 0 0 10px #60a5faaa; }
  .inspector-controls { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
  #urlsBox { width: 100%; min-height: 120px; resize: vertical; margin-bottom: 15px; }
  .url-actions-container { margin-top: 25px; }
@@ -138,57 +145,118 @@
  .card .actions button:hover:not(:disabled) { background: #3b82f6; }
  
  #apiViewerContainer {
-    background: #1e2433; border: 1px solid #2e3a59; border-radius: 14px; padding: 20px 25px;
+    background: #1e2433; border: 1px solid #2e3a59; border-radius: 14px; padding: 20px 25px; margin-top: 20px;
  }
  #api-table {
     width: 100%; border-collapse: collapse; font-size: 14px;
  }
  #api-table td {
-    padding: 8px 4px; vertical-align: top; border-bottom: 1px solid #23262a;
+    padding: 10px 8px; vertical-align: top; border-bottom: 1px solid #2e3a59;
  }
  #api-table tr:last-child td { border-bottom: none; }
- #api-table td:nth-child(1) { font-weight: 500; color: #aeb9c7; width: 220px; word-break: break-all; }
- #api-table td:nth-child(2) { font-weight: 700; color: #e0e0e0; width: 180px; }
- #api-table td:nth-child(3) { color: #e0e0e0; word-break: break-word; }
- #api-table .api-section-header td {
-    font-size: 16px; font-weight: bold; color: #60a5fa;
-    padding-top: 20px !important; padding-bottom: 10px !important;
+ #api-table td:nth-child(1) { font-weight: 700; color: #aeb9c7; width: 220px; word-break: break-word; }
+ #api-table td:nth-child(2) { color: #e0e0e0; word-break: break-word; }
+ #api-table td:nth-child(2) :is(ul, ol) { padding-left: 20px; }
+ #api-table td:nth-child(2) img { max-width: 100%; border-radius: 6px; }
+ .api-game-title { font-size: 24px; font-weight: bold; color: #fff; margin: 0; }
+ .api-game-title-zh { font-size: 28px; font-weight: bold; color: #60a5fa; text-shadow: 0 0 10px #60a5faaa; margin: 5px 0 0 0; }
+ #api-table .api-section-header td, #api-table .api-title-header td {
+    font-size: 18px; font-weight: bold; color: #60a5fa;
+    padding-top: 25px !important; padding-bottom: 12px !important;
     border-bottom: 1px solid #60a5fa;
  }
+ #api-table .api-title-header td { border: none; padding-bottom: 20px !important; }
  #api-table a { color: #60a5fa; text-decoration: none; }
  #api-table a:hover { text-decoration: underline; }
  #api-table code { background: #121417; padding: 2px 5px; border-radius: 4px; font-family: monospace; }
- .language-table { width: 100%; margin-top: 5px; }
- .language-table th, .language-table td { text-align: left; padding: 4px; }
- .language-table th { color: #aeb9c7; }
+ .language-table { width: 100%; margin-top: 5px; border: 1px solid #2e3a59; border-radius: 6px; border-collapse: separate; border-spacing: 0; }
+ .language-table th, .language-table td { text-align: left; padding: 6px 8px; border-bottom: 1px solid #2e3a59; }
+ .language-table tr:last-child td { border-bottom: none; }
+ .language-table th { color: #aeb9c7; background: #23262a; }
  .language-table .support-cell { text-align: center; }
- .check-mark { color: #4ade80; }
+ .check-mark { color: #4ade80; font-weight: bold; }
  .platform-icon { height: 1em; vertical-align: text-bottom; margin-right: 4px; }
+ 
+ #cropModal {
+     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+     background: rgba(0, 0, 0, 0.8); z-index: 2000;
+     display: none; align-items: center; justify-content: center;
+     backdrop-filter: blur(5px);
+ }
+ #cropContainer {
+     background: #1e2433; padding: 20px; border-radius: 14px;
+     max-width: 90vw; max-height: 90vh; display: flex; flex-direction: column;
+     box-shadow: 0 8px 30px rgba(0,0,0,0.4); border: 1px solid #2e3a59;
+ }
+ #cropImageContainer { max-width: 80vw; max-height: 70vh; }
+ #cropImage { display: block; max-width: 100%; max-height: 100%; }
+ .crop-controls { margin-top: 15px; text-align: center; display: flex; flex-direction: column; gap: 10px; justify-content: center;}
+ .crop-controls .row { display: flex; gap: 10px; justify-content: center; align-items: center; }
+ .crop-controls .row button, .crop-controls button { font-size: 12px; padding: 6px 12px;}
+ .crop-controls input[type="number"] { width: 70px; height: 30px; }
+
 </style>
 </head>
 <body>
 
 <div id="tutorial" class="hidden">
- <div class="tutorial-header">
- <h3>使用教程</h3>
- <button id="hideTutorialBtn" class="toggle-tutorial-btn">关闭</button>
- </div>
- <ul>
- <li>在输入框中输入游戏的 App ID。</li>
- <li>点击“获取”按钮加载数据。</li>
- <li>Logo 位置会根据官方数据自动设定。</li>
- <li>默认文字会自动填充，可自行修改（支持多行）。</li>
- <li>可以调整文字颜色、字号、字体和行间距。</li>
- <li>用鼠标拖动 Logo 或文字改变位置。</li>
- <li>按住 <kbd>Shift</kbd> 键可同步拖动 Logo 和文字。</li>
- <li>调整 Logo 缩放、背景渐变，完成后点击“保存图片”。</li>
- </ul>
+    <div class="tutorial-header">
+        <h2>使用说明</h2>
+        <button id="hideTutorialBtn" class="toggle-tutorial-btn">关闭</button>
+    </div>
+    <p>这是一个为游戏编辑和社区运营人员设计的在线工具，旨在快速获取和处理 Steam 游戏的各类图片素材。</p>
+
+    <h3>✨ 主要功能</h3>
+    <h4>自定义横幅生成器</h4>
+    <ul>
+        <li><strong>智能加载</strong>：自动加载游戏的高清背景图，并优先加载简体中文版 (<code>schinese</code>) 的 Logo。</li>
+        <li><strong>默认居中</strong>：Logo 默认放置在画布正中央，方便拖动调整。</li>
+        <li><strong>自由布局与快捷键</strong>：
+            <ul>
+                <li>直接拖动 Logo 或文字进行微调。</li>
+                <li>按住 <kbd>Shift</kbd> 键可同步拖动 Logo 和文字。</li>
+                <li>当元素重叠时，按住 <kbd>Ctrl</kbd> 键可强制只拖动文字层。</li>
+            </ul>
+        </li>
+    </ul>
+
+    <h4>图片探查器</h4>
+    <ul>
+        <li><strong>全面搜刮</strong>：自动解析 API 数据，找出所有与该游戏相关的图片资源链接（**包含官方商店截图**）。</li>
+        <li><strong>智能分组</strong>：将所有图片按分辨率进行归类，方便快速查找。</li>
+        <li><strong>一键下载所有截图</strong>：新增专用按钮，一键下载所有高清商店截图。</li>
+    </ul>
+
+    <h4>高级图片裁剪</h4>
+    <ul>
+        <li><strong>手动精裁</strong>：内置强大的图片裁剪工具，支持自由选择、固定比例裁剪，并可指定输出分辨率。</li>
+        <li><strong>一键自动化</strong>：提供“<strong>自动裁剪封面图</strong>”功能，一键完成以下任务：
+            <ol>
+                <li>自动寻找 <code>920x430</code> 的横向主图（优先中文版）。</li>
+                <li>将其自动裁剪并下载为 <code>474x242</code>, <code>497x278</code>, <code>300x180</code> 三种常用尺寸。</li>
+                <li>自动寻找 <code>300x450</code> 的纵向封面图（优先中文版）。</li>
+                <li>直接下载该 <code>300x450</code> 原图。</li>
+            </ol>
+        </li>
+    </ul>
+    
+    <h4>API 数据浏览器</h4>
+    <ul>
+        <li><strong>中文优先</strong>：优先从中文商店获取“关于游戏”、“简介”等文本信息。</li>
+        <li><strong>结构化展示</strong>：将原始 JSON 数据整理成清晰、易读的表格。</li>
+        <li><strong>智能汉化</strong>：将关键字段和语言列表等内容进行汉化，提升阅读体验。</li>
+        <li><strong>新增信息</strong>：现在包含“关于游戏”、“简介”、“PC配置要求”等更多详细信息。</li>
+    </ul>
 </div>
+
 
 <div class="main-container">
  <div class="header-container">
- <h1>枫小痕自己的steamdb</h1>
- <button id="showTutorialBtn" title="显示教程">?</button>
+     <h1>枫小痕自己的steamdb</h1>
+     <div class="header-controls">
+        <a href="https://github.com/taoyunan/steam-image-viewer" target="_blank" title="查看 GitHub 仓库" style="color: #bbb; text-decoration: none; font-weight: 500; font-size: 16px;">GitHub</a>
+        <button id="showTutorialBtn" title="显示教程">?</button>
+     </div>
  </div>
 
  <div class="controls">
@@ -233,19 +301,51 @@
 
 <div id="imageInspector" style="display: none;">
  <h3>图片探查器</h3>
+  <div class="inspector-controls">
+     <button id="autoCropBtn" style="background-color: #22c55e;">自动裁剪封面图</button>
+     <button id="downloadScreenshotsBtn" style="background-color: #0ea5e9;">一键下载所有截图</button>
+  </div>
  <div id="imageList"></div>
  <div class="url-actions-container">
- <div class="inspector-controls">
- <button id="copyAllBtn">复制全部链接</button>
- <button id="exportTxtBtn">导出为 .txt</button>
- </div>
- <textarea id="urlsBox" readonly placeholder="这里会显示识别到的所有图片链接..."></textarea>
+     <div class="inspector-controls">
+         <button id="copyAllBtn">复制全部链接</button>
+         <button id="exportTxtBtn">导出为 .txt</button>
+     </div>
+     <textarea id="urlsBox" readonly placeholder="这里会显示识别到的所有图片链接..."></textarea>
  </div>
 </div>
 
+<div id="cropModal">
+  <div id="cropContainer">
+    <div id="cropImageContainer">
+      <img id="cropImage" src="" alt="Cropping Target">
+    </div>
+    <div class="crop-controls">
+      <div class="row">
+        <button class="aspect-btn" data-ratio="free">自由</button>
+        <button class="aspect-btn" data-ratio="1.777">16:9</button>
+        <button class="aspect-btn" data-ratio="1.333">4:3</button>
+        <button class="aspect-btn" data-ratio="1">1:1</button>
+      </div>
+      <div class="row">
+          <span>输出分辨率:</span>
+          <input type="number" id="cropWidth" placeholder="宽">
+          <span>x</span>
+          <input type="number" id="cropHeight" placeholder="高">
+      </div>
+      <div class="row">
+          <button id="cropDownloadBtn">裁剪并下载</button>
+          <button id="cropCancelBtn" style="background-color: #6c757d;">取消</button>
+      </div>
+    </div>
+  </div>
+</div>
 
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
 <script>
  const API_BASE = "https://api.steamcmd.net/v1/info/";
+ const STORE_API_BASE = "https://store.steampowered.com/api/appdetails?appids=";
  const IMG_BASE = "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/";
  const snapThreshold = 10;
  
@@ -267,6 +367,8 @@
  const showApiBtn = document.getElementById("showApiBtn");
  const apiViewerContainer = document.getElementById("apiViewerContainer");
  const apiTable = document.getElementById("api-table");
+ const cropModal = document.getElementById('cropModal');
+ const cropImage = document.getElementById('cropImage');
  
  // Global state variables
  let heroImg = new Image();
@@ -280,6 +382,9 @@
  let dragging = false;
  let dragTarget = null;
  let dragOffsetX = 0, dragOffsetY = 0;
+ let cropper = null;
+ let imageCategories = {};
+ let screenshotUrls = [];
 
  function clearError() { errorBox.textContent = ""; }
  function showError(msg) { errorBox.textContent = msg; }
@@ -291,11 +396,41 @@
  function drawLogo() { if (!logoImg.src || !logoImg.complete) return; ctx.drawImage(logoImg, logoX, logoY, logoImg.width * logoScale, logoImg.height * logoScale); }
  function drawText() { if (!customText) return; ctx.font = `${textSize}px "${textFont}"`; ctx.fillStyle = textColor; ctx.textBaseline = "top"; const lines = customText.split("\n"); lines.forEach((line, i) => { ctx.fillText(line, textX, textY + i * (textSize + lineSpacing)); }); }
  function drawAll() { drawHero(heroImg); drawLogo(); drawText(); }
- function initLogoPosition(logoPos) { const cw = canvas.width, ch = canvas.height; logoScale = (0.3 * cw) / logoImg.width; const widthPct = parseFloat(logoPos.width_pct); const heightPct = parseFloat(logoPos.height_pct); const pinned = (logoPos.pinned_position || "BottomRight").toLowerCase(); const logoW = logoImg.width * logoScale; const logoH = logoImg.height * logoScale; if (pinned.includes("right")) { logoX = cw - (widthPct / 100) * cw - logoW; } else { logoX = (widthPct / 100) * cw; } if (pinned.includes("bottom")) { logoY = ch - (heightPct / 100) * ch - logoH; } else { logoY = (heightPct / 100) * ch; } scaleSlider.value = Math.round(logoScale * 100); scalePercent.textContent = `${Math.round(logoScale * 100)}%`; scaleSlider.disabled = false; saveBtn.disabled = false; }
  function snapToCenterX(objX, objW) { const centerX = (canvas.width - objW) / 2; return Math.abs(objX - centerX) < snapThreshold ? centerX : objX; }
  function snapToCenterY(objY, objH) { const centerY = (canvas.height - objH) / 2; return Math.abs(objY - centerY) < snapThreshold ? centerY : objY; }
 
- canvas.addEventListener("mousedown", (e) => { const rect = canvas.getBoundingClientRect(); const mx = e.clientX - rect.left, my = e.clientY - rect.top; const logoW = logoImg.width * logoScale, logoH = logoImg.height * logoScale; ctx.font = `${textSize}px "${textFont}"`; const lines = customText.split("\n"); const textW = lines.length > 0 ? Math.max(...lines.map(line => ctx.measureText(line).width)) : 0; const textH = lines.length * (textSize + lineSpacing) - lineSpacing; if (e.shiftKey) { dragTarget = "both"; dragOffsetX = mx - logoX; dragOffsetY = my - logoY; } else if (logoImg.src && mx >= logoX && mx <= logoX + logoW && my >= logoY && my <= logoY + logoH) { dragTarget = "logo"; dragOffsetX = mx - logoX; dragOffsetY = my - logoY; } else if (customText && mx >= textX && mx <= textX + textW && my >= textY && my <= textY + textH) { dragTarget = "text"; dragOffsetX = mx - textX; dragOffsetY = my - textY; } if (dragTarget) { dragging = true; canvas.style.cursor = "grabbing"; } });
+ canvas.addEventListener("mousedown", (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+    const logoW = logoImg.width * logoScale, logoH = logoImg.height * logoScale;
+    ctx.font = `${textSize}px "${textFont}"`;
+    const lines = customText.split("\n");
+    const textW = lines.length > 0 ? Math.max(...lines.map(line => ctx.measureText(line).width)) : 0;
+    const textH = lines.length * (textSize + lineSpacing) - lineSpacing;
+
+    if (e.ctrlKey) {
+        dragTarget = "text";
+        dragOffsetX = mx - textX;
+        dragOffsetY = my - textY;
+    } else if (e.shiftKey) {
+        dragTarget = "both";
+        dragOffsetX = mx - logoX;
+        dragOffsetY = my - logoY;
+    } else if (logoImg.src && mx >= logoX && mx <= logoX + logoW && my >= logoY && my <= logoY + logoH) {
+        dragTarget = "logo";
+        dragOffsetX = mx - logoX;
+        dragOffsetY = my - logoY;
+    } else if (customText && mx >= textX && mx <= textX + textW && my >= textY && my <= textY + textH) {
+        dragTarget = "text";
+        dragOffsetX = mx - textX;
+        dragOffsetY = my - textY;
+    }
+    
+    if (dragTarget) {
+        dragging = true;
+        canvas.style.cursor = "grabbing";
+    }
+ });
  canvas.addEventListener("mousemove", (e) => { if (!dragging) return; const rect = canvas.getBoundingClientRect(); const mx = e.clientX - rect.left, my = e.clientY - rect.top; const logoW = logoImg.width * logoScale, logoH = logoImg.height * logoScale; ctx.font = `${textSize}px "${textFont}"`; const lines = customText.split("\n"); const textW = lines.length > 0 ? Math.max(...lines.map(line => ctx.measureText(line).width)) : 0; const textH = lines.length * (textSize + lineSpacing) - lineSpacing; if (dragTarget === "logo" || dragTarget === "both") { let newX = mx - dragOffsetX; let newY = my - dragOffsetY; if(logoImg.src) { newX = snapToCenterX(newX, logoW); newY = snapToCenterY(newY, logoH); } if (dragTarget === "logo") { logoX = newX; logoY = newY; } else { let offsetX = newX - logoX, offsetY = newY - logoY; logoX = newX; logoY = newY; textX += offsetX; textY += offsetY; } } if (dragTarget === "text" && dragTarget !== "both") { let newX = mx - dragOffsetX; let newY = my - dragOffsetY; if(customText) { newX = snapToCenterX(newX, textW); newY = snapToCenterY(newY, textH); } textX = newX; textY = newY; } drawAll(); });
  ["mouseup","mouseleave"].forEach(evt => { canvas.addEventListener(evt, () => { dragging = false; dragTarget = null; canvas.style.cursor = "grab"; }); });
  scaleSlider.addEventListener("input", (e) => { logoScale = e.target.value / 100; scalePercent.textContent = `${e.target.value}%`; drawAll(); });
@@ -327,7 +462,7 @@
          return; 
      } 
      imageList.innerHTML = `<p style="color: #60a5fa; text-align: center;">正在获取 ${urls.length} 张图片尺寸用于分组，请稍候...</p>`; 
-     const categories = {}; 
+     imageCategories = {}; 
      const promises = urls.map(u => new Promise(resolve => { 
          const img = new Image(); 
          img.src = u; 
@@ -336,10 +471,10 @@
      })); 
      Promise.all(promises).then(results => { 
          results.forEach(({ u, res }) => { 
-             if (!categories[res]) categories[res] = []; 
-             categories[res].push(u); 
+             if (!imageCategories[res]) imageCategories[res] = []; 
+             imageCategories[res].push(u); 
          }); 
-         renderCategories(categories); 
+         renderCategories(imageCategories); 
      }); 
  }
  function renderCategories(categories) {
@@ -351,7 +486,7 @@
          const [wB, hB] = b.split('x').map(Number); 
          const areaA = wA * hA;
          const areaB = wB * hB;
-         return areaB - areaA; // Sort by image area descending
+         return areaB - areaA;
      }); 
      sortedKeys.forEach(res => { 
          const urls = categories[res]; 
@@ -359,7 +494,7 @@
          wrapper.className = 'category'; 
          const header = document.createElement('div'); 
          header.className = 'category-header'; 
-         header.innerHTML = `<h4>分辨率: ${res} (${urls.length} 张)</h4><button class="toggle-btn">折叠</button>`; 
+         header.innerHTML = `<h4>分辨率: ${res} (${urls.length} 张)</h4><button class="toggle-btn">展开</button>`; 
          wrapper.appendChild(header); 
          const cardGrid = document.createElement('div'); 
          cardGrid.className = 'card-grid'; 
@@ -369,7 +504,7 @@
              if (u.toLowerCase().includes('schinese')) { card.classList.add('highlight-schinese'); } 
              const langMatch = u.match(/(schinese|tchinese|english|japanese|koreana|french|german|spanish|latam)/i); 
              const lang = langMatch ? langMatch[0] : '通用'; 
-             card.innerHTML = `<img src="${u}" alt="image" class="thumb" loading="lazy" onclick="this.style.objectFit = this.style.objectFit === 'contain' ? 'cover' : 'contain'"><div class="meta">${lang}</div><div class="actions"><button data-url="${u}" class="open-btn">打开</button><button data-url="${u}" class="copy-btn">复制</button><button data-url="${u}" class="dl-btn">下载</button></div>`; 
+             card.innerHTML = `<img src="${u}" alt="image" class="thumb" loading="lazy" onclick="this.style.objectFit = this.style.objectFit === 'contain' ? 'cover' : 'contain'"><div class="meta">${lang}</div><div class="actions"><button data-url="${u}" class="open-btn">打开</button><button data-url="${u}" class="copy-btn">复制</button><button data-url="${u}" class="crop-btn">裁剪</button><button data-url="${u}" class="dl-btn">下载</button></div>`; 
              cardGrid.appendChild(card); 
          }); 
          wrapper.appendChild(cardGrid); 
@@ -378,231 +513,348 @@
          toggleBtn.onclick = () => { 
              const isHidden = cardGrid.style.display === 'none'; 
              cardGrid.style.display = isHidden ? 'grid' : 'none'; 
-             toggleBtn.textContent = isHidden ? '展开' : '折叠'; 
+             toggleBtn.textContent = isHidden ? '折叠' : '展开'; 
          }; 
      }); 
  }
- imageList.addEventListener('click', e => { const target = e.target; const url = target.dataset.url; if (!url) return; if (target.classList.contains('open-btn')) { window.open(url, '_blank'); } else if (target.classList.contains('copy-btn')) { navigator.clipboard.writeText(url).then(() => { setLoading('链接已复制!'); setTimeout(clearLoading, 1500); }); } else if (target.classList.contains('dl-btn')) { const a = document.createElement('a'); a.href = url; a.download = url.split('/').pop().split('?')[0] || `image.jpg`; a.target = '_blank'; a.click(); } });
+ imageList.addEventListener('click', e => { const target = e.target; const url = target.dataset.url; if (!url) return; if (target.classList.contains('open-btn')) { window.open(url, '_blank'); } else if (target.classList.contains('copy-btn')) { navigator.clipboard.writeText(url).then(() => { setLoading('链接已复制!'); setTimeout(clearLoading, 1500); }); } else if (target.classList.contains('dl-btn')) { downloadImage(url); } else if (target.classList.contains('crop-btn')) { cropImage.src = url; cropModal.style.display = 'flex'; cropImage.onload = () => { if(cropper) { cropper.destroy(); } cropper = new Cropper(cropImage, { viewMode: 1, background: false, autoCropArea: 0.9 }); }; } });
  document.getElementById('copyAllBtn').addEventListener('click', () => { if (!urlsBox.value) return; navigator.clipboard.writeText(urlsBox.value).then(() => { setLoading('全部链接已复制!'); setTimeout(clearLoading, 1500); }); });
  document.getElementById('exportTxtBtn').addEventListener('click', () => { if (!urlsBox.value) return; const blob = new Blob([urlsBox.value], {type:'text/plain;charset=utf-8'}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `steam_${document.getElementById("appId").value.trim()}_images.txt`; a.click(); URL.revokeObjectURL(a.href); });
+ document.getElementById('cropDownloadBtn').addEventListener('click', () => { if (!cropper) return; const cropWidth = parseInt(document.getElementById('cropWidth').value, 10); const cropHeight = parseInt(document.getElementById('cropHeight').value, 10); const options = {}; if (!isNaN(cropWidth) && cropWidth > 0) options.width = cropWidth; if (!isNaN(cropHeight) && cropHeight > 0) options.height = cropHeight; const canvas = cropper.getCroppedCanvas(options); const link = document.createElement('a'); link.download = `cropped_${document.getElementById("appId").value.trim()}_${Date.now()}.png`; link.href = canvas.toDataURL('image/png'); link.click(); document.getElementById('cropCancelBtn').click(); });
+ document.getElementById('cropCancelBtn').addEventListener('click', () => { cropModal.style.display = 'none'; if (cropper) { cropper.destroy(); cropper = null; } cropImage.src = ''; });
+ document.querySelectorAll('.aspect-btn').forEach(btn => { btn.addEventListener('click', (e) => { if (!cropper) return; const ratio = e.target.dataset.ratio; cropper.setAspectRatio(ratio === 'free' ? NaN : parseFloat(ratio)); }); });
 
- function buildApiTable(appData) {
+function buildApiTable(appData, storeData) {
     const data = appData.data || {};
     const common = appData.common || {};
     let html = '';
-    
-    const translations = {
-        'name': '名称', 'type': 'APP 类型', 'steam_appid': 'APP ID', 'developers': '开发商', 'publishers': '发行商',
-        'metacritic_name': 'Metacritic 名称', 'controller_support': '控制器支持', 'releasestate': '发布状态',
-        'osarch': '系统架构', 'community_hub_visible': '社区中心可见', 'community_visible_stats': '社区中心可见统计',
-        'workshop_visible': '创意工坊可见', 'release_date': '发售时间', 'oslist': '操作系统列表', 'osextended': '扩展操作系统',
-        'review_score': '评测结果', 'review_percentage': '好评率', 'supported_languages': '支持的语言', 'primary_genre': '主要标签',
-        'genres': '商店标签', 'categories': '商店分类', 'steam_deck_compatibility': 'Steam Deck 兼容性', 'test_timestamp': '测试时间戳',
-        'tested_build_id': '测试版本ID', 'configuration': '配置', 'supported_input': '支持的输入', 'requires_manual_keyboard_invoke': '需要手动调用键盘',
-        'requires_non_controller_launcher_nav': '启动器需要非手柄操作', 'primary_player_is_controller_slot_0': '主玩家是手柄0号位',
-        'non_deck_display_glyphs': '显示非Deck图标', 'small_text': '文本过小', 'requires_internet_for_setup': '首次设置需要网络',
-        'requires_internet_for_singleplayer': '单人模式需要网络', 'recommended_runtime': '推荐运行环境', 'requires_h264': '需要H264解码',
-        'clienticon': '桌面图标', 'clienttga': '客户端标签', 'icon': '小图标', 'logo': '商店图标', 'logo_small': '商店小图标', 'clienticns': 'clienticns',
-        'library_assets': '库资源', 'library_capsule': '封面图', 'library_hero': '库横幅', 'library_logo': '库图标', 'LinuxClientIcon': 'Linux 客户端图标',
-        'library_header': 'library_header', 'main_capsule': 'main_capsule', 'small_capsule': '小预览图', 'header': '商店小图',
-        'hero_capsule': 'hero_capsule', 'page_background_path': '页面背景路径', 'timestamp': '时间戳', 'movies': '宣传片',
-        'screenshots': '截图', 'library_assets_full': '完整库资源', 'image': '图片', 'image2x': '2倍图', 'pinned_position': '固定位置',
-        'width_pct': '宽度百分比', 'height_pct': '高度百分比', 'trailer_name': '预告片名称', 'trailer_480p': '480p预告片',
-        'trailer_max': '最高画质预告片', 'video': '视频', 'webm': 'WebM格式', 'mp4': 'MP4格式', 'controllertagwizard': '手柄标签向导',
-        'detected_technologies': '检测到的组件', 'library_hero_blur': 'library_hero_blur', 'logo_position': 'logo_position',
-        'social media': 'Social Media', 'steam release date': 'Steam发售日期', 'store asset modification time': '存储资产修改时间',
-        'first seen on steamdb': 'First seen on SteamDB', 'category': 'category', 'steamos_compatibility': 'SteamOS 兼容性',
-        'requires_voice_files': '需要语音文件', 'gamescope_frame_limiter_not_supported': '不支持Gamescope帧率限制', 'hdr_support': 'HDR支持',
-        'last_changenumber': 'Last Changenumber', 'last_record_update': '最后更新时间', 'franchise': '系列作品'
+
+    const get = (obj, path, defaultValue = '') => {
+        const value = path.split('.').reduce((acc, part) => acc && acc[part], obj);
+        return value !== undefined && value !== null ? value : defaultValue;
+    };
+
+    const addRow = (label, value) => {
+        if (value === '' || value === undefined || value === null || (Array.isArray(value) && value.length === 0)) return;
+        html += `<tr><td>${label}</td><td>${value}</td></tr>`;
+    };
+
+    const addSection = (title) => {
+        html += `<tr><td colspan="2" class="api-section-header">${title}</td></tr>`;
     };
     
-    const pinnedOrder = [
-        { key: 'steam_appid', en: 'App ID', zh: 'APP ID', source: 'data' },
-        { key: 'type', en: 'App Type', zh: 'APP 类型', source: 'common' },
-        { key: 'developers', en: 'Developer', zh: '开发商', source: 'data' },
-        { key: 'publishers', en: 'Publisher', zh: '发行商', source: 'data' },
-        { key: 'franchise', en: 'Franchise', zh: '系列作品', source: 'data' },
-        { key: 'platforms', en: 'Supported Systems', zh: '支持的操作系统', source: 'data' },
-        { key: 'detected_technologies', en: 'Technologies', zh: 'Technologies', source: 'common' },
-        { key: 'last_changenumber', en: 'Last Changenumber', zh: 'Last Changenumber', source: 'common' },
-        { key: 'last_record_update', en: 'Last Record Update', zh: '最后更新时间', source: 'common' },
-        { key: 'release_date', en: 'Release Date', zh: '发售时间', source: 'data' }
-    ];
+    const formatTimestamp = (ts) => {
+        if (!ts || isNaN(ts)) return 'N/A';
+        const date = new Date(ts * 1000);
+        return date.toUTCString();
+    };
     
-    let allData = {};
-    const processObject = (obj, prefix = '') => {
-        for (const key in obj) {
-            if (obj.hasOwnProperty(key)) {
-                const value = obj[key];
-                const newKey = prefix ? `${prefix}.${key}` : key;
-                if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
-                    processObject(value, newKey);
-                } else {
-                    allData[newKey] = value;
-                }
-            }
-        }
-    };
-    processObject({ ...data, ...common });
+    const englishName = get(common, 'name', '基本信息');
+    const chineseName = get(common, 'name_localized.schinese');
+    let titleHtml = `<p class="api-game-title">${englishName}</p>`;
+    if (chineseName) {
+        titleHtml += `<p class="api-game-title-zh">${chineseName}</p>`;
+    }
+    html += `<tr class="api-title-header"><td colspan="2">${titleHtml}</td></tr>`;
+    
+    if (storeData) {
+        if(storeData.about_the_game) addRow('关于游戏', storeData.about_the_game);
+        if(storeData.short_description) addRow('简介', storeData.short_description);
+        if(storeData.website) addRow('主页', `<a href="${storeData.website}" target="_blank">${storeData.website}</a>`);
+    }
 
-    const formatValue = (key, value) => {
-        if (value === true) return '✅ 是';
-        if (value === false) return '❌ 否';
-        if (typeof value === 'boolean') return value ? '✅ 是' : '❌ 否';
-        if ((key.toLowerCase().includes('date') || key.toLowerCase().includes('update') || key.toLowerCase().includes('timestamp')) && typeof value === 'number') {
-            return new Date(value * 1000).toUTCString();
-        }
-        if (key.toLowerCase().includes('date') && typeof value === 'object' && value.date) {
-             return new Date(value.date * 1000).toUTCString();
-        }
-        if(key === 'Supported Systems'){
-            return (value || []).map(sys => `<img src="https://steamdb.info/static/img/os/${sys}.svg" title="${sys}" class="platform-icon" alt="${sys}">`).join(' ');
-        }
-        if (key === 'controller_support' && value === 'full') return '完全支持';
-        if (Array.isArray(value) && value.every(item => typeof item === 'string' && item.startsWith('http'))) {
-            return value.map(url => `<a href="${url}" target="_blank">${url.split('/')[2]}</a>`).join('<br>');
-        }
-        return value;
-    };
+    addRow('APP ID', get(data, 'steam_appid'));
+    addRow('APP 类型', get(common, 'type'));
+    addRow('开发商', get(data, 'developers', []).join(', '));
+    addRow('发行商', get(data, 'publishers', []).join(', '));
+    
+     if (storeData) {
+        if(storeData.genres) addRow('分类', storeData.genres.map(g => g.description).join(', '));
+        if(storeData.categories) addRow('标签', storeData.categories.map(c => c.description).join(', '));
+    }
 
-    const addSection = (title) => { html += `<tr><td colspan="3" class="api-section-header">${title}</td></tr>`; };
-    const addRow = (en, zh, val) => {
-         if (val === undefined || val === null || val === '' || (Array.isArray(val) && val.length === 0)) return;
-         html += `<tr><td>${en}</td><td>${zh}</td><td>${formatValue(en, val)}</td></tr>`;
-    };
-
-    // Pinned Section
-    addSection(data.name || '基本信息');
-    const processedKeys = new Set();
-    pinnedOrder.forEach(item => {
-        const sourceObj = item.source === 'data' ? data : common;
-        let value = sourceObj[item.key];
-        if (value !== undefined) {
-             if (item.key === 'platforms') value = Object.entries(value || {}).filter(([_,v])=>v).map(([k])=>k);
-             else if (item.key === 'developers' || item.key === 'publishers') value = (value || []).join(', ');
-             else if (item.key === 'detected_technologies') value = (value || []).map(t => t.name).join(', ');
-             addRow(item.en, item.zh, value);
-             processedKeys.add(item.key);
-        }
-    });
-
-    // Detailed Information Section
-    addSection("附加信息");
-    const detailedOrder = ['developers','metacritic_name','controller_support','community_visible_stats','releasestate','publishers','release_date','osarch','community_hub_visible','primary_genre','genres','last_record_update','osextended','review_score','review_percentage','detected_technologies','steam_deck_compatibility','controllertagwizard'];
-    detailedOrder.forEach(key => {
-        if(allData.hasOwnProperty(key) && !processedKeys.has(key)){
-            addRow(key, translations[key] || key, allData[key]);
-            processedKeys.add(key);
-        }
-    });
-
-    // Language Section
-    const langValue = (data || {}).supported_languages;
-    if (typeof langValue === 'string' && langValue) {
+    addRow('Last Changenumber', get(common, 'last_changenumber'));
+    addRow('最后更新时间', formatTimestamp(get(common, 'last_record_update')));
+    addRow('发售时间', get(data, 'release_date.coming_soon') ? 'To be announced' : formatTimestamp(get(data, 'release_date.date')));
+    addRow('控制器支持', get(data, 'controller_support'));
+    addRow('发布状态', get(common, 'releasestate'));
+    if (get(common, 'exfgls')) addRow('禁用家庭共享(exfgls)', get(common, 'exfgls'));
+    addRow('商店页发行日期', formatTimestamp(get(common, 'steam_release_date')));
+    
+    if (storeData && storeData.pc_requirements && Object.keys(storeData.pc_requirements).length > 0) {
+        addSection('PC 配置要求');
+        if(storeData.pc_requirements.minimum) addRow('最低配置', storeData.pc_requirements.minimum);
+        if(storeData.pc_requirements.recommended) addRow('推荐配置', storeData.pc_requirements.recommended);
+    }
+    
+    const localized = get(common, 'name_localized');
+    if (localized && Object.keys(localized).length > 0) {
+        addSection('本地化名称');
+        const langMap = {'english':'英语','japanese':'日语','schinese':'简体中文','tchinese':'繁体中文','french':'法语','german':'德语','italian':'意大利语','koreana':'韩语','spanish':'西班牙语','russian':'俄语','thai':'泰语','portuguese':'葡萄牙语','polish':'波兰语','danish':'丹麦语','dutch':'荷兰语','finnish':'芬兰语','norwegian':'挪威语','swedish':'瑞典语','hungarian':'匈牙利语','czech':'捷克语','romanian':'罗马尼亚语','turkish':'土耳其语','arabic':'阿拉伯语','bulgarian':'保加利亚语','greek':'希腊语','ukrainian':'乌克兰语','vietnamese':'越南语','brazilian':'巴西葡萄牙语','latam':'拉丁美洲西班牙语'};
+        Object.entries(localized).forEach(([lang, name]) => addRow(langMap[lang] || lang, name));
+    }
+    
+    const langValue = get(data, 'supported_languages');
+    if (langValue) {
         addSection("支持的语言");
-        const langs = langValue.split(',').map(s=>s.trim()).filter(Boolean);
+        const langMap = {'english': '英语', 'japanese': '日语', 'french': '法语', 'italian': '意大利语', 'german': '德语', 'spanish': '西班牙语 - 西班牙', 'brazilian': '葡萄牙语 - 巴西', 'russian': '俄语', 'schinese': '简体中文', 'tchinese': '繁体中文', 'koreana': '韩语'};
         let langTable = '<table class="language-table"><thead><tr><th>语言</th><th>界面</th><th>音频</th><th>字幕</th></tr></thead><tbody>';
-        langs.forEach(langStr => {
-            const hasAudio = langStr.includes('*');
-            const name = langStr.replace(/<strong>\*<\/strong>/i, '').replace(/<br>/i, '').trim();
-            langTable += `<tr><td>${name}</td><td class="support-cell"><span class="check-mark">✔</span></td><td class="support-cell">${hasAudio ? '<span class="check-mark">✔</span>' : ''}</td><td class="support-cell"><span class="check-mark">✔</span></td></tr>`;
+        Object.entries(langValue).forEach(([lang, support]) => {
+            if (support.supported) {
+                langTable += `<tr><td>${langMap[lang] || lang}</td><td class="support-cell"><span class="check-mark">✔</span></td><td class="support-cell">${support.full_audio ? '<span class="check-mark">✔</span>' : ''}</td><td class="support-cell">${support.subtitles ? '<span class="check-mark">✔</span>' : ''}</td></tr>`;
+            }
         });
         langTable += '</tbody></table>';
-        html += `<tr><td colspan="3">${langTable}</td></tr>`;
-        processedKeys.add('supported_languages');
+        html += `<tr><td colspan="2">${langTable}</td></tr>`;
     }
 
-    // Assets section
-    addSection("资产");
-    const assetKeys = Object.keys(allData).filter(k => k.startsWith('common.') || k.startsWith('library_assets_full'));
-    for(const key of Object.keys(allData).sort()){
-        if(!processedKeys.has(key)){
-             addRow(key, translations[key] || key, allData[key]);
-        }
+    if (storeData && storeData.movies && storeData.movies.length > 0) {
+        addSection('宣传影像');
+        storeData.movies.forEach(movie => {
+            if (movie.mp4 && movie.mp4.max) {
+                 addRow(movie.name, `<a href="${movie.mp4.max}" target="_blank">${movie.mp4.max}</a>`);
+            }
+        });
     }
-    
+
     apiTable.innerHTML = html;
- }
+}
  
  async function fetchData(appId) {
-     clearError(); setLoading("正在请求API...");
-     saveBtn.disabled = true; scaleSlider.disabled = true; showApiBtn.disabled = true;
-     apiViewerContainer.style.display = 'none'; showApiBtn.textContent = '查看 API 数据';
-     imageInspector.style.display = 'none'; imageList.innerHTML = ''; urlsBox.value = '';
-     try {
-         const res = await fetch(API_BASE + appId);
-         if (!res.ok) throw new Error(`API 请求失败: ${res.status}`);
-         const json = await res.json();
-         
-         const appData = json.data?.[appId];
-         if (!appData) { throw new Error(json.message || "未找到游戏数据或API返回格式无效"); }
+    clearError(); setLoading("正在请求API...");
+    saveBtn.disabled = true; scaleSlider.disabled = true; showApiBtn.disabled = true;
+    apiViewerContainer.style.display = 'none'; showApiBtn.textContent = '查看 API 数据';
+    imageInspector.style.display = 'none'; imageList.innerHTML = ''; urlsBox.value = '';
+    screenshotUrls = [];
 
-         buildApiTable(appData);
-         showApiBtn.disabled = false;
-         
-         setLoading("正在加载拼图资源...");
-         
-         let gameName = appData.common?.name_localized?.schinese || appData.common?.metacritic_name || appData.common?.name || "";
-         customText = `3DM《${gameName}》专区`;
-         document.getElementById("customText").value = customText;
-         
-         const assetsFull = appData.common?.library_assets_full;
-         if (!assetsFull) throw new Error("缺少 library_assets_full 数据");
-         
-         const heroPath = assetsFull.library_hero?.image?.english;
-         let logoPath = assetsFull.library_logo?.image?.english;
-         if (!heroPath) throw new Error("未找到 library_hero 图片");
-         
-         const heroUrl = IMG_BASE + appId + "/" + heroPath;
-         let logoUrl = logoPath ? IMG_BASE + appId + "/" + logoPath : `https://cdn.cloudflare.steamstatic.com/steam/apps/${appId}/header.jpg`;
-         
-         heroImg = new Image(); heroImg.crossOrigin = "anonymous"; heroImg.src = heroUrl;
-         logoImg = new Image(); logoImg.crossOrigin = "anonymous"; logoImg.src = logoUrl;
-         
-         await Promise.all([
-             new Promise((res, rej) => { heroImg.onload = res; heroImg.onerror = () => rej(new Error('背景图加载失败')); }),
-             new Promise((res) => { logoImg.onload = res; logoImg.onerror = () => { logoImg.src = `https://cdn.cloudflare.steamstatic.com/steam/apps/${appId}/header.jpg`; logoImg.onload = res; logoImg.onerror = res; };}),
-         ]);
-         
-         drawHero(heroImg);
-         if(logoImg.complete && logoImg.naturalWidth > 0) {
-             const logoPos = assetsFull.library_logo?.logo_position;
-             if (logoPos) {
-                 initLogoPosition(logoPos);
-             } else {
-                 logoScale = (0.2 * canvas.width) / logoImg.width;
-                 logoX = canvas.width - logoImg.width * logoScale - 20;
-                 logoY = canvas.height - logoImg.height * logoScale - 20;
-                 scaleSlider.value = Math.round(logoScale * 100);
-                 scalePercent.textContent = `${Math.round(logoScale * 100)}%`;
-                 scaleSlider.disabled = false;
-                 saveBtn.disabled = false;
-             }
-         } else { logoImg.src = ''; scaleSlider.disabled = true; }
+    try {
+        const proxyUrl = 'https://corsproxy.io/?';
+        const storeApiUrl = `${STORE_API_BASE}${appId}&l=schinese`;
+        
+        const [steamCmdRes, storeRes] = await Promise.all([
+            fetch(API_BASE + appId),
+            fetch(proxyUrl + encodeURIComponent(storeApiUrl))
+        ]);
 
-         ctx.font = `${textSize}px "${textFont}"`;
-         const lines = customText.split("\n");
-         const textW = Math.max(...lines.map(line => ctx.measureText(line).width));
-         const textH = lines.length * (textSize + lineSpacing) - lineSpacing;
-         textX = (canvas.width - textW) / 2;
-         textY = (canvas.height - textH) / 2 + 30;
-         drawAll();
+        if (!steamCmdRes.ok) throw new Error(`SteamCMD API 请求失败: ${steamCmdRes.status}`);
+        
+        const steamCmdJson = await steamCmdRes.json();
+        const appData = steamCmdJson.data?.[appId];
+        if (!appData) {
+            throw new Error(steamCmdJson.message || "未找到游戏数据或API返回格式无效");
+        }
+        
+        let storeData = null;
+        if (storeRes.ok) {
+            const storeJson = await storeRes.json();
+            const storeResult = storeJson[appId];
+            if (storeResult?.success) {
+                storeData = storeResult.data;
+            }
+        } else {
+             console.warn(`商店 API 请求失败: ${storeRes.status}`);
+        }
+        
+        buildApiTable(appData, storeData);
+        showApiBtn.disabled = false;
+        
+        setLoading("正在加载拼图资源...");
+        
+        let gameName = appData.common?.name_localized?.schinese || appData.common?.metacritic_name || appData.common?.name || "";
+        customText = `3DM《${gameName}》专区`;
+        document.getElementById("customText").value = customText;
+        
+        const assetsFull = appData.common?.library_assets_full;
+        if (!assetsFull) throw new Error("缺少 library_assets_full 数据");
+        
+        const heroPath = assetsFull.library_hero?.image?.english;
+        let logoPath = assetsFull.library_logo?.image?.schinese || assetsFull.library_logo?.image?.english;
+        if (!heroPath) throw new Error("未找到 library_hero 图片");
+        
+        const heroUrl = IMG_BASE + appId + "/" + heroPath;
+        let logoUrl = logoPath ? IMG_BASE + appId + "/" + logoPath : `https://cdn.cloudflare.steamstatic.com/steam/apps/${appId}/header.jpg`;
+        
+        heroImg = new Image(); heroImg.crossOrigin = "anonymous"; heroImg.src = heroUrl;
+        logoImg = new Image(); logoImg.crossOrigin = "anonymous"; logoImg.src = logoUrl;
+        
+        await Promise.all([
+            new Promise((res, rej) => { heroImg.onload = res; heroImg.onerror = () => rej(new Error('背景图加载失败')); }),
+            new Promise((res) => { logoImg.onload = res; logoImg.onerror = () => { logoImg.src = `https://cdn.cloudflare.steamstatic.com/steam/apps/${appId}/header.jpg`; logoImg.onload = res; logoImg.onerror = res; }; }),
+        ]);
+        
+        drawHero(heroImg);
+        if(logoImg.complete && logoImg.naturalWidth > 0) {
+           logoScale = (0.2 * canvas.width) / logoImg.width;
+           const logoW = logoImg.width * logoScale;
+           const logoH = logoImg.height * logoScale;
+           logoX = (canvas.width - logoW) / 2;
+           logoY = (canvas.height - logoH) / 2;
+           
+           scaleSlider.value = Math.round(logoScale * 100);
+           scalePercent.textContent = `${Math.round(logoScale * 100)}%`;
+           scaleSlider.disabled = false;
+           saveBtn.disabled = false;
+        } else { 
+           logoImg.src = ''; 
+           scaleSlider.disabled = true; 
+        }
 
-         setLoading("正在解析图片资源...");
-         const candidates = findImageCandidates(json);
-         const allImageUrls = [...new Set(candidates.map(c => buildFullUrl(appId, c)))];
-         imageInspector.style.display = 'block';
-         if (allImageUrls.length > 0) {
-             urlsBox.value = allImageUrls.join('\n');
-             showImages(allImageUrls);
-         } else {
-             imageList.innerHTML = '<p>未能自动识别到其他图片资源。</p>';
-         }
-         clearLoading();
-     } catch (e) {
-         showError(e.message || "未知错误");
-         clearLoading();
-     }
+        ctx.font = `${textSize}px "${textFont}"`;
+        const lines = customText.split("\n");
+        const textW = Math.max(...lines.map(line => ctx.measureText(line).width));
+        const textH = lines.length * (textSize + lineSpacing) - lineSpacing;
+        textX = (canvas.width - textW) / 2;
+        textY = (canvas.height - textH) / 2 + 30;
+        drawAll();
+
+        setLoading("正在解析图片资源...");
+        let candidates = findImageCandidates(steamCmdJson);
+        let allImageUrls = [...new Set(candidates.map(c => buildFullUrl(appId, c)))];
+
+        if (storeData?.screenshots) {
+            screenshotUrls = storeData.screenshots.map(ss => ss.path_full);
+            allImageUrls.push(...screenshotUrls);
+            allImageUrls = [...new Set(allImageUrls)];
+        }
+
+        imageInspector.style.display = 'block';
+        if (allImageUrls.length > 0) {
+            urlsBox.value = allImageUrls.join('\n');
+            showImages(allImageUrls);
+        } else {
+            imageList.innerHTML = '<p>未能自动识别到任何图片资源。</p>';
+        }
+        clearLoading();
+    } catch (e) {
+        showError(e.message || "未知错误");
+        clearLoading();
+    }
+}
+ function downloadImage(url, filename) {
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename || url.split('/').pop().split('?')[0] || `image.jpg`;
+    a.target = '_blank';
+    a.click();
+ }
+
+ async function performCropAndDownload(sourceUrl, targetWidth, targetHeight, filename) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.src = sourceUrl;
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = targetWidth;
+            canvas.height = targetHeight;
+            const ctx = canvas.getContext('2d');
+            
+            const sourceAspect = img.width / img.height;
+            const targetAspect = targetWidth / targetHeight;
+            let sx, sy, sWidth, sHeight;
+
+            if (sourceAspect > targetAspect) {
+                sHeight = img.height;
+                sWidth = sHeight * targetAspect;
+                sx = (img.width - sWidth) / 2;
+                sy = 0;
+            } else {
+                sWidth = img.width;
+                sHeight = sWidth / targetAspect;
+                sx = 0;
+                sy = (img.height - sHeight) / 2;
+            }
+            
+            ctx.drawImage(img, sx, sy, sWidth, sHeight, 0, 0, targetWidth, targetHeight);
+            
+            canvas.toBlob(blob => {
+                downloadImage(URL.createObjectURL(blob), filename);
+                resolve();
+            }, 'image/png');
+        };
+        img.onerror = () => reject(new Error(`图片加载失败: ${sourceUrl}`));
+    });
+ }
+ 
+ async function autoCropAndDownload() {
+    setLoading("正在执行一键裁剪...");
+    const appId = document.getElementById("appId").value.trim();
+    
+    const findImage = (resolution) => {
+        const urls = imageCategories[resolution] || [];
+        if (urls.length === 0) return null;
+        const schineseUrl = urls.find(u => u.includes('schinese'));
+        return schineseUrl || urls[0];
+    };
+
+    const source920 = findImage('920x430');
+    const source300 = findImage('300x450');
+    
+    let tasks = [];
+    let foundAny = false;
+
+    if (source300) {
+        foundAny = true;
+        tasks.push(() => {
+            setLoading("正在下载 300x450 图...");
+            downloadImage(source300, `${appId}_300x450.png`);
+            return Promise.resolve();
+        });
+    } else {
+        showError("未找到 300x450 分辨率的图片。");
+    }
+
+    if (source920) {
+        foundAny = true;
+        const cropTargets = [ { w: 474, h: 242 }, { w: 497, h: 278 }, { w: 300, h: 180 } ];
+        cropTargets.forEach(target => {
+            tasks.push(() => {
+                setLoading(`正在裁剪 ${target.w}x${target.h} 图...`);
+                return performCropAndDownload(source920, target.w, target.h, `${appId}_${target.w}x${target.h}.png`);
+            });
+        });
+    } else {
+        showError("未找到 920x430 分辨率的图片用于裁剪。");
+    }
+
+    if (!foundAny) {
+        clearLoading();
+        showError("未找到任何符合条件的图片。");
+        return;
+    }
+
+    for (const task of tasks) {
+        try { await task(); } catch (error) { showError(error.message); }
+    }
+    
+    clearLoading(); setLoading("所有任务已完成！");
+    setTimeout(clearLoading, 2000);
+ }
+
+ async function downloadAllScreenshots() {
+    if (screenshotUrls.length === 0) {
+        showError("没有可下载的截图。");
+        return;
+    }
+    const appId = document.getElementById("appId").value.trim();
+    for (let i = 0; i < screenshotUrls.length; i++) {
+        setLoading(`正在下载截图 (${i + 1}/${screenshotUrls.length})...`);
+        const url = screenshotUrls[i];
+        const filename = `${appId}_screenshot_${i + 1}.jpg`;
+        try {
+            const response = await fetch(url);
+            const blob = await response.blob();
+            const objectUrl = URL.createObjectURL(blob);
+            downloadImage(objectUrl, filename);
+            URL.revokeObjectURL(objectUrl);
+        } catch(e) {
+            showError(`下载截图 ${i+1} 失败，尝试直接打开...`);
+            downloadImage(url, filename);
+        }
+        await new Promise(resolve => setTimeout(resolve, 300));
+    }
+    setLoading("所有截图下载任务已发起！");
+    setTimeout(clearLoading, 2000);
  }
 
  document.getElementById("fetchBtn").addEventListener("click", () => {
@@ -620,6 +872,9 @@
          showApiBtn.textContent = '查看 API 数据';
      }
  });
+ 
+ document.getElementById("autoCropBtn").addEventListener('click', autoCropAndDownload);
+ document.getElementById("downloadScreenshotsBtn").addEventListener('click', downloadAllScreenshots);
  
  window.addEventListener('DOMContentLoaded', () => {
      const params = new URLSearchParams(window.location.search);
