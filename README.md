@@ -3,7 +3,7 @@
 这是一个为游戏编辑、社区运营人员和内容创作者设计的在线工具，旨在通过自动化流程，快速获取和处理 Steam 游戏的各类官方图片素材和关键信息。
 
 **[➡️ 访问在线工具](https://taoyunan.github.io/steam-image-viewer/123.html)**  
-*(请将上方链接替换为你自己的 GitHub Pages 地址)*
+
 
 ---
 
