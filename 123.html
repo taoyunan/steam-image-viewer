@@ -116,12 +116,12 @@
  font-size: 20px; padding: 0 10px; background: #23262a;
  border: 1px solid #2e3a59; box-shadow: none;
  }
- #imageInspector {
+ #imageInspector, #apiViewerContainer {
  text-align: left; margin-top: 36px; padding: 20px 25px; background: #1e2433;
  border-radius: 14px; font-size: 15px; line-height: 1.7;
  box-shadow: 0 0 20px #1e2433; border: 1px solid #2e3a59;
  }
- #imageInspector h3 { margin: 0 0 15px; color: #60a5fa; font-weight: 700; text-shadow: 0 0 10px #60a5faaa; }
+ #imageInspector h3, #apiViewerContainer h3 { margin: 0 0 15px; color: #60a5fa; font-weight: 700; text-shadow: 0 0 10px #60a5faaa; }
  .inspector-controls { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
  #urlsBox { width: 100%; min-height: 120px; resize: vertical; margin-bottom: 15px; }
  .url-actions-container { margin-top: 25px; }
@@ -144,11 +144,8 @@
  .card .actions button { font-size: 12px; padding: 6px 10px; background: #4b6cb7; box-shadow: none; }
  .card .actions button:hover:not(:disabled) { background: #3b82f6; }
 
- #apiViewerContainer {
-    background: #1e2433; border: 1px solid #2e3a59; border-radius: 14px; padding: 20px 25px; margin-top: 20px;
- }
  #api-table {
-    width: 100%; border-collapse: collapse; font-size: 14px;
+    width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 15px;
  }
  #api-table td {
     padding: 10px 8px; vertical-align: top; border-bottom: 1px solid #2e3a59;
@@ -168,7 +165,7 @@
  #api-table .api-title-header td { border: none; padding-bottom: 20px !important; }
  #api-table a { color: #60a5fa; text-decoration: none; }
  #api-table a:hover { text-decoration: underline; }
- #api-table code { background: #1217; padding: 2px 5px; border-radius: 4px; font-family: monospace; }
+ #api-table code { background: #121417; padding: 2px 5px; border-radius: 4px; font-family: monospace; }
  .language-table { width: 100%; margin-top: 5px; border: 1px solid #2e3a59; border-radius: 6px; border-collapse: separate; border-spacing: 0; }
  .language-table th, .language-table td { text-align: left; padding: 6px 8px; border-bottom: 1px solid #2e3a59; }
  .language-table tr:last-child td { border-bottom: none; }
@@ -262,10 +259,10 @@
  </div>
 
  <div class="controls">
-    <input type="text" id="appId" placeholder="请输入 Steam App ID" autocomplete="off" />
+    <input type="text" id="appId" placeholder="输入 Steam App ID 或商店链接" autocomplete="off" />
     <button id="fetchBtn" style="margin-left: 12px;">获取</button>
     <button id="saveBtn" disabled style="margin-left: auto;">保存图片</button>
-    <button id="showApiBtn" disabled>查看 API 数据</button>
+    <button id="goToStoreBtn" disabled>前往商店</button>
  </div>
 
  <div class="controls">
@@ -297,7 +294,12 @@
  <div class="status-box"> <div id="loading"></div> <div id="error"></div> </div>
 </div>
 
+<div class="controls" style="justify-content: center; margin-top: 20px;">
+    <button id="toggleApiBtn" style="display: none;">查看 API 数据</button>
+</div>
+
 <div id="apiViewerContainer" style="display: none;">
+ <h3>API 数据浏览器</h3>
  <table id="api-table"></table>
 </div>
 
@@ -354,6 +356,7 @@
  const snapThreshold = 10;
  
  // DOM Elements
+ const appIdInput = document.getElementById("appId");
  const canvas = document.getElementById("heroCanvas");
  const ctx = canvas.getContext("2d");
  const errorBox = document.getElementById("error");
@@ -361,6 +364,7 @@
  const scaleSlider = document.getElementById("scaleSlider");
  const scalePercent = document.getElementById("scalePercent");
  const saveBtn = document.getElementById("saveBtn");
+ const goToStoreBtn = document.getElementById("goToStoreBtn");
  const overlaySlider = document.getElementById("overlaySlider");
  const overlayPercent = document.getElementById("overlayPercent");
  const imageInspector = document.getElementById("imageInspector");
@@ -368,7 +372,7 @@
  const urlsBox = document.getElementById("urlsBox");
  const gradientColorInput = document.getElementById("gradientColor");
  const gradientDirectionSelect = document.getElementById("gradientDirection");
- const showApiBtn = document.getElementById("showApiBtn");
+ const toggleApiBtn = document.getElementById("toggleApiBtn");
  const apiViewerContainer = document.getElementById("apiViewerContainer");
  const apiTable = document.getElementById("api-table");
  const cropModal = document.getElementById('cropModal');
@@ -444,7 +448,8 @@
  overlaySlider.addEventListener("input", (e) => { overlayOpacity = e.target.value / 100; overlayPercent.textContent = `${e.target.value}%`; drawAll(); });
  gradientColorInput.addEventListener("input", (e) => { gradientColor = e.target.value; drawAll(); });
  gradientDirectionSelect.addEventListener("change", (e) => { gradientDirection = e.target.value; drawAll(); });
- saveBtn.addEventListener("click", () => { const link = document.createElement("a"); link.download = `steam_${document.getElementById("appId").value.trim()}.png`; link.href = canvas.toDataURL("image/png"); link.click(); });
+ saveBtn.addEventListener("click", () => { const link = document.createElement("a"); link.download = `steam_${appIdInput.value.trim()}.png`; link.href = canvas.toDataURL("image/png"); link.click(); });
+ goToStoreBtn.addEventListener('click', () => { const appId = appIdInput.value.trim(); if (appId) { const storeUrl = `https://store.steampowered.com/app/${appId}/`; window.open(storeUrl, '_blank'); }});
  document.getElementById("customText").addEventListener("input", (e) => { customText = e.target.value; drawAll(); });
  document.getElementById("textColor").addEventListener("input", (e) => { textColor = e.target.value; drawAll(); });
  document.getElementById("textSize").addEventListener("input", (e) => { textSize = parseInt(e.target.value, 10) || 24; drawAll(); });
@@ -562,8 +567,8 @@
 
  imageList.addEventListener('click', e => { const target = e.target; const url = target.dataset.url; if (!url) return; if (target.classList.contains('open-btn')) { window.open(url, '_blank'); } else if (target.classList.contains('copy-btn')) { navigator.clipboard.writeText(url).then(() => { setLoading('链接已复制!'); setTimeout(clearLoading, 1500); }); } else if (target.classList.contains('dl-btn')) { downloadImage(url); } else if (target.classList.contains('crop-btn')) { cropImage.src = url; cropModal.style.display = 'flex'; cropImage.onload = () => { if(cropper) { cropper.destroy(); } cropper = new Cropper(cropImage, { viewMode: 1, background: false, autoCropArea: 0.9 }); }; } });
  document.getElementById('copyAllBtn').addEventListener('click', () => { if (!urlsBox.value) return; navigator.clipboard.writeText(urlsBox.value).then(() => { setLoading('全部链接已复制!'); setTimeout(clearLoading, 1500); }); });
- document.getElementById('exportTxtBtn').addEventListener('click', () => { if (!urlsBox.value) return; const blob = new Blob([urlsBox.value], {type:'text/plain;charset=utf-8'}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `steam_${document.getElementById("appId").value.trim()}_assets.txt`; a.click(); URL.revokeObjectURL(a.href); });
- document.getElementById('cropDownloadBtn').addEventListener('click', () => { if (!cropper) return; const cropWidth = parseInt(cropWidthInput.value, 10); const cropHeight = parseInt(cropHeightInput.value, 10); const options = {}; if (!isNaN(cropWidth) && cropWidth > 0) options.width = cropWidth; if (!isNaN(cropHeight) && cropHeight > 0) options.height = cropHeight; const canvas = cropper.getCroppedCanvas(options); const link = document.createElement('a'); link.download = `cropped_${document.getElementById("appId").value.trim()}_${Date.now()}.png`; link.href = canvas.toDataURL('image/png'); link.click(); document.getElementById('cropCancelBtn').click(); });
+ document.getElementById('exportTxtBtn').addEventListener('click', () => { if (!urlsBox.value) return; const blob = new Blob([urlsBox.value], {type:'text/plain;charset=utf-8'}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `steam_${appIdInput.value.trim()}_assets.txt`; a.click(); URL.revokeObjectURL(a.href); });
+ document.getElementById('cropDownloadBtn').addEventListener('click', () => { if (!cropper) return; const cropWidth = parseInt(cropWidthInput.value, 10); const cropHeight = parseInt(cropHeightInput.value, 10); const options = {}; if (!isNaN(cropWidth) && cropWidth > 0) options.width = cropWidth; if (!isNaN(cropHeight) && cropHeight > 0) options.height = cropHeight; const canvas = cropper.getCroppedCanvas(options); const link = document.createElement('a'); link.download = `cropped_${appIdInput.value.trim()}_${Date.now()}.png`; link.href = canvas.toDataURL('image/png'); link.click(); document.getElementById('cropCancelBtn').click(); });
  document.getElementById('cropCancelBtn').addEventListener('click', () => { cropModal.style.display = 'none'; if (cropper) { cropper.destroy(); cropper = null; } cropImage.src = ''; cropWidthInput.value = ''; cropHeightInput.value = ''; });
  document.querySelectorAll('.aspect-btn').forEach(btn => { btn.addEventListener('click', (e) => { if (!cropper) return; const ratio = e.target.dataset.ratio; cropper.setAspectRatio(ratio === 'free' ? NaN : parseFloat(ratio)); cropWidthInput.value = ''; cropHeightInput.value = ''; }); });
  
@@ -669,8 +674,8 @@ function buildApiTable(appData, storeData) {
  
  async function fetchData(appId) {
     clearError(); setLoading("正在请求API...");
-    saveBtn.disabled = true; scaleSlider.disabled = true; showApiBtn.disabled = true;
-    apiViewerContainer.style.display = 'none'; showApiBtn.textContent = '查看 API 数据';
+    saveBtn.disabled = true; goToStoreBtn.disabled = true; scaleSlider.disabled = true; 
+    toggleApiBtn.style.display = 'none'; apiViewerContainer.style.display = 'none';
     imageInspector.style.display = 'none'; imageList.innerHTML = ''; urlsBox.value = '';
     screenshotUrls = [];
     videoData = [];
@@ -704,7 +709,7 @@ function buildApiTable(appData, storeData) {
         }
         
         buildApiTable(appData, storeData);
-        showApiBtn.disabled = false;
+        toggleApiBtn.style.display = 'block';
         
         setLoading("正在加载拼图资源...");
         
@@ -741,11 +746,13 @@ function buildApiTable(appData, storeData) {
            scaleSlider.value = Math.round(logoScale * 100);
            scalePercent.textContent = `${Math.round(logoScale * 100)}%`;
            scaleSlider.disabled = false;
-           saveBtn.disabled = false;
         } else { 
            logoImg.src = ''; 
            scaleSlider.disabled = true; 
         }
+
+        saveBtn.disabled = false;
+        goToStoreBtn.disabled = false;
 
         ctx.font = `${textSize}px "${textFont}"`;
         const lines = customText.split("\n");
@@ -847,7 +854,8 @@ function buildApiTable(appData, storeData) {
  }
  
  async function autoCropAndZip() {
-    const appId = document.getElementById("appId").value.trim();
+    const appId = appIdInput.value.trim();
+    if (!appId) return;
     const zip = new JSZip();
     
     const findImage = (resolution) => {
@@ -967,7 +975,8 @@ function buildApiTable(appData, storeData) {
         showError("没有可下载的截图。");
         return;
     }
-    const appId = document.getElementById("appId").value.trim();
+    const appId = appIdInput.value.trim();
+    if (!appId) return;
     const assetsToZip = screenshotUrls.map((url, i) => ({
         url: url,
         filename: `${appId}_screenshot_${i + 1}.jpg`
@@ -976,14 +985,26 @@ function buildApiTable(appData, storeData) {
  }
 
  document.getElementById("fetchBtn").addEventListener("click", () => {
-     const id = document.getElementById("appId").value.trim();
-     if (!id) { showError("请输入有效的 Steam App ID"); return; }
-     fetchData(id);
+     const rawInput = appIdInput.value.trim();
+     let appId = rawInput;
+     
+     const urlMatch = rawInput.match(/store\.steampowered\.com\/app\/(\d+)/);
+     if (urlMatch && urlMatch[1]) {
+         appId = urlMatch[1];
+         appIdInput.value = appId;
+     }
+
+     if (!/^\d+$/.test(appId)) { 
+        showError("请输入有效的 Steam App ID 或商店链接"); 
+        return; 
+     }
+     fetchData(appId);
  });
  
- showApiBtn.addEventListener('click', () => {
-     apiViewerContainer.style.display = apiViewerContainer.style.display === 'none' ? 'block' : 'none';
-     showApiBtn.textContent = apiViewerContainer.style.display === 'none' ? '查看 API 数据' : '隐藏 API 数据';
+ toggleApiBtn.addEventListener('click', () => {
+     const isHidden = apiViewerContainer.style.display === 'none';
+     apiViewerContainer.style.display = isHidden ? 'block' : 'none';
+     toggleApiBtn.textContent = isHidden ? '隐藏 API 数据' : '查看 API 数据';
  });
  
  document.getElementById("autoCropBtn").addEventListener('click', autoCropAndZip);
@@ -993,7 +1014,7 @@ function buildApiTable(appData, storeData) {
      const params = new URLSearchParams(window.location.search);
      const appIdFromUrl = params.get("appid");
      if (appIdFromUrl) {
-         document.getElementById("appId").value = appIdFromUrl;
+         appIdInput.value = appIdFromUrl;
          fetchData(appIdFromUrl);
      }
  });
