@@ -116,12 +116,12 @@
  font-size: 20px; padding: 0 10px; background: #23262a;
  border: 1px solid #2e3a59; box-shadow: none;
  }
- #imageInspector, #apiViewerContainer {
+ #imageInspector {
  text-align: left; margin-top: 36px; padding: 20px 25px; background: #1e2433;
  border-radius: 14px; font-size: 15px; line-height: 1.7;
  box-shadow: 0 0 20px #1e2433; border: 1px solid #2e3a59;
  }
- #imageInspector h3, #apiViewerContainer h3 { margin: 0 0 15px; color: #60a5fa; font-weight: 700; text-shadow: 0 0 10px #60a5faaa; }
+ #imageInspector h3 { margin: 0 0 15px; color: #60a5fa; font-weight: 700; text-shadow: 0 0 10px #60a5faaa; }
  .inspector-controls { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
  #urlsBox { width: 100%; min-height: 120px; resize: vertical; margin-bottom: 15px; }
  .url-actions-container { margin-top: 25px; }
@@ -143,36 +143,65 @@
  .card .actions { display: flex; gap: 8px; width: 100%; flex-wrap: wrap; justify-content: center; }
  .card .actions button { font-size: 12px; padding: 6px 10px; background: #4b6cb7; box-shadow: none; }
  .card .actions button:hover:not(:disabled) { background: #3b82f6; }
-
- #api-table {
-    width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 15px;
+ 
+ /* --- NEW UI STYLES FOR API VIEWER --- */
+ #apiViewerContainer {
+    margin-top: 36px; background: #1e2433; border-radius: 14px;
+    border: 1px solid #2e3a59; box-shadow: 0 0 20px #1e2433;
+    padding: 0; overflow: hidden;
  }
+ #apiViewerContainer h3 {
+    margin: 0; font-weight: 700; color: #60a5fa;
+    padding: 15px 25px; background-color: #2a3141;
+    border-bottom: 1px solid #2e3a59;
+    text-shadow: 0 0 10px #60a5faaa;
+ }
+ #api-table {
+    width: 100%; border-collapse: collapse; font-size: 14px;
+ }
+ #api-table tr:nth-child(even):not(.api-section-header) td { background-color: rgba(0,0,0,0.15); }
+ #api-table tr:hover:not(.api-section-header) td { background-color: rgba(96,165,250,0.1); }
  #api-table td {
-    padding: 10px 8px; vertical-align: top; border-bottom: 1px solid #2e3a59;
+    padding: 12px 15px; vertical-align: middle;
+    border-bottom: 1px solid #2e3a59;
  }
  #api-table tr:last-child td { border-bottom: none; }
- #api-table td:nth-child(1) { font-weight: 700; color: #aeb9c7; width: 220px; word-break: break-word; }
- #api-table td:nth-child(2) { color: #e0e0e0; word-break: break-word; }
- #api-table td:nth-child(2) :is(ul, ol) { padding-left: 20px; }
- #api-table td:nth-child(2) img { max-width: 100%; border-radius: 6px; }
- .api-game-title { font-size: 24px; font-weight: bold; color: #fff; margin: 0; }
- .api-game-title-zh { font-size: 28px; font-weight: bold; color: #60a5fa; text-shadow: 0 0 10px #60a5faaa; margin: 5px 0 0 0; }
- #api-table .api-section-header td, #api-table .api-title-header td {
-    font-size: 18px; font-weight: bold; color: #60a5fa;
-    padding-top: 25px !important; padding-bottom: 12px !important;
-    border-bottom: 1px solid #60a5fa;
+ #api-table td:nth-child(1) {
+    font-weight: 700; color: #aeb9c7; width: 250px;
+    text-align: right; word-break: break-word;
  }
- #api-table .api-title-header td { border: none; padding-bottom: 20px !important; }
+ #api-table td:nth-child(2) { color: #e0e0e0; word-break: break-word; }
+ #api-table td:nth-child(2) :is(ul, ol) { padding-left: 20px; margin: 0; }
+ #api-table td:nth-child(2) img { max-width: 100%; border-radius: 6px; }
+ .api-game-title { font-size: 20px; font-weight: bold; color: #ccc; margin: 5px 0 0 0; }
+ .api-game-title-zh { font-size: 28px; font-weight: bold; color: #60a5fa; text-shadow: 0 0 10px #60a5faaa; margin: 0; }
+ #api-table .api-section-header td {
+    font-size: 16px; font-weight: bold; color: #e0e0e0;
+    background-color: #3a4255; text-align: left;
+    padding: 10px 15px !important;
+    border-top: 1px solid #4a5568;
+    border-bottom: 1px solid #4a5568;
+ }
+ #api-table .api-title-header td {
+    border: none; padding: 20px 15px !important; text-align: left;
+ }
  #api-table a { color: #60a5fa; text-decoration: none; }
  #api-table a:hover { text-decoration: underline; }
  #api-table code { background: #121417; padding: 2px 5px; border-radius: 4px; font-family: monospace; }
+ .api-tag {
+    display: inline-block; background-color: #3b5a94; color: #e0e0e0;
+    padding: 3px 8px; border-radius: 4px; font-size: 13px;
+    margin: 2px; text-decoration: none; border: 1px solid #4b6cb7;
+ }
+ .api-tag:hover { background-color: #4b6cb7; }
  .language-table { width: 100%; margin-top: 5px; border: 1px solid #2e3a59; border-radius: 6px; border-collapse: separate; border-spacing: 0; }
  .language-table th, .language-table td { text-align: left; padding: 6px 8px; border-bottom: 1px solid #2e3a59; }
  .language-table tr:last-child td { border-bottom: none; }
  .language-table th { color: #aeb9c7; background: #23262a; }
  .language-table .support-cell { text-align: center; }
  .check-mark { color: #4ade80; font-weight: bold; }
- .platform-icon { height: 1em; vertical-align: text-bottom; margin-right: 4px; }
+ .platform-icon { display: inline-block; vertical-align: middle; margin: 0 4px; }
+ /* --- END NEW UI STYLES --- */
 
  #cropModal {
      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -396,12 +425,22 @@
  let imageCategories = {};
  let videoData = [];
  let screenshotUrls = [];
+ let steamTags = new Map();
+ let tagsPromise = null;
 
+ // --- HELPER FUNCTIONS ---
  function clearError() { errorBox.textContent = ""; }
  function showError(msg) { errorBox.textContent = msg; }
  function setLoading(msg) { loadingBox.textContent = msg; }
  function clearLoading() { loadingBox.textContent = ""; }
  function hexToRgba(hex, alpha) { const r = parseInt(hex.slice(1, 3), 16); const g = parseInt(hex.slice(3, 5), 16); const b = parseInt(hex.slice(5, 7), 16); return `rgba(${r}, ${g}, ${b}, ${alpha})`; }
+ 
+ const get = (obj, path, defaultValue = '') => {
+    if (!obj) return defaultValue;
+    const value = path.split('.').reduce((acc, part) => acc && acc[part], obj);
+    return value !== undefined && value !== null ? value : defaultValue;
+ };
+ // --- END HELPER FUNCTIONS ---
 
  function drawHero(img) { const cw = canvas.width, ch = canvas.height; ctx.clearRect(0, 0, cw, ch); if (!img.src) return; const scale = Math.max(cw / img.width, ch / img.height); const w = img.width * scale, h = img.height * scale; ctx.drawImage(img, (cw - w) / 2, (ch - h) / 2, w, h); if (overlayOpacity > 0) { let x0 = 0, y0 = 0, x1 = 0, y1 = 0; switch (gradientDirection) { case 'top-to-bottom': y1 = ch; break; case 'bottom-to-top': y0 = ch; break; case 'left-to-right': x1 = cw; break; case 'right-to-left': x0 = cw; break; case 'tl-to-br': x1 = cw; y1 = ch; break; case 'tr-to-bl': x0 = cw; y1 = ch; break; case 'bl-to-tr': y0 = ch; x1 = cw; break; case 'br-to-tl': x0 = cw; y0 = ch; break; } const g = ctx.createLinearGradient(x0, y0, x1, y1); g.addColorStop(0, hexToRgba(gradientColor, overlayOpacity)); g.addColorStop(1, hexToRgba(gradientColor, 0)); ctx.fillStyle = g; ctx.fillRect(0, 0, cw, ch); } }
  function drawLogo() { if (!logoImg.src || !logoImg.complete) return; ctx.drawImage(logoImg, logoX, logoY, logoImg.width * logoScale, logoImg.height * logoScale); }
@@ -431,7 +470,7 @@
         dragTarget = "logo";
         dragOffsetX = mx - logoX;
         dragOffsetY = my - logoY;
-    } else if (customText && mx >= textX && mx <= textX + textW && my >= textY && my <= textY + textH) {
+    } else if (customText && mx >= textX && mx <= textX + textW && my >= textY && my <= textH) {
         dragTarget = "text";
         dragOffsetX = mx - textX;
         dragOffsetY = my - textY;
@@ -576,15 +615,10 @@
  cropWidthInput.addEventListener('input', updateCropAspectRatio);
  cropHeightInput.addEventListener('input', updateCropAspectRatio);
 
-function buildApiTable(appData, storeData) {
+function buildApiTable(appData, storeData, playerCount, reviewSummary) {
     const data = appData.data || {};
     const common = appData.common || {};
     let html = '';
-
-    const get = (obj, path, defaultValue = '') => {
-        const value = path.split('.').reduce((acc, part) => acc && acc[part], obj);
-        return value !== undefined && value !== null ? value : defaultValue;
-    };
 
     const addRow = (label, value) => {
         if (value === '' || value === undefined || value === null || (Array.isArray(value) && value.length === 0)) return;
@@ -592,58 +626,114 @@ function buildApiTable(appData, storeData) {
     };
 
     const addSection = (title) => {
-        html += `<tr><td colspan="2" class="api-section-header">${title}</td></tr>`;
+        html += `<tr class="api-section-header"><td colspan="2">${title}</td></tr>`;
     };
     
-    const formatTimestamp = (ts) => {
+    const formatChineseDate = (ts) => {
         if (!ts || isNaN(ts)) return 'N/A';
         const date = new Date(ts * 1000);
-        return date.toUTCString();
+        return date.toLocaleString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long', hour: '2-digit', minute: '2-digit', second: '2-digit' });
     };
     
     const englishName = get(common, 'name', '基本信息');
     const chineseName = get(common, 'name_localized.schinese');
-    let titleHtml = `<p class="api-game-title">${englishName}</p>`;
+    let titleHtml = '';
     if (chineseName) {
-        titleHtml += `<p class="api-game-title-zh">${chineseName}</p>`;
+        titleHtml += `<p class="api-game-title-zh">${chineseName}</p><p class="api-game-title">${englishName}</p>`;
+    } else {
+        titleHtml += `<p class="api-game-title-zh">${englishName}</p>`;
     }
     html += `<tr class="api-title-header"><td colspan="2">${titleHtml}</td></tr>`;
     
-    if (storeData) {
-        if(storeData.about_the_game) addRow('关于游戏', storeData.about_the_game);
-        if(storeData.short_description) addRow('简介', storeData.short_description);
-        if(storeData.website) addRow('主页', `<a href="${storeData.website}" target="_blank">${storeData.website}</a>`);
-    }
-
+    addSection('基本信息');
     addRow('APP ID', get(data, 'steam_appid'));
-    addRow('APP 类型', get(common, 'type'));
-    addRow('开发商', get(data, 'developers', []).join(', '));
-    addRow('发行商', get(data, 'publishers', []).join(', '));
+    const typeMap = { game: '游戏', dlc: 'DLC', application: '应用', music: '音乐', video: '视频', series: '剧集', hardware: '硬件' };
+    const appType = get(common, 'type', '');
+    addRow('APP 类型', typeMap[appType.toLowerCase()] || appType);
     
-     if (storeData) {
-        if(storeData.genres) addRow('分类', storeData.genres.map(g => g.description).join(', '));
-        if(storeData.categories) addRow('标签', storeData.categories.map(c => c.description).join(', '));
-    }
+    let developers = get(data, 'developers', []);
+    if (!Array.isArray(developers)) developers = [developers];
+    const devHtml = developers.map(d => `<a href="#">${d}</a>`).join(', ');
+    addRow('开发商', devHtml);
 
-    addRow('Last Changenumber', get(common, 'last_changenumber'));
-    addRow('最后更新时间', formatTimestamp(get(common, 'last_record_update')));
-    addRow('发售时间', get(data, 'release_date.coming_soon') ? 'To be announced' : formatTimestamp(get(data, 'release_date.date')));
-    addRow('控制器支持', get(data, 'controller_support'));
-    addRow('发布状态', get(common, 'releasestate'));
-    if (get(common, 'exfgls')) addRow('禁用家庭共享(exfgls)', get(common, 'exfgls'));
-    addRow('商店页发行日期', formatTimestamp(get(common, 'steam_release_date')));
+    let publishers = get(data, 'publishers', []);
+    if (!Array.isArray(publishers)) publishers = [publishers];
+    const pubHtml = publishers.map(p => `<a href="#">${p}</a>`).join(', ');
+    addRow('发行商', pubHtml);
+
+    if (storeData) {
+        if (storeData.is_free) { addRow('价格', '免费游玩'); }
+        else if (storeData.price_overview) {
+            const price = storeData.price_overview;
+            let priceHtml = `${price.final_formatted}`;
+            if (price.discount_percent > 0) {
+                priceHtml += ` <span style="color:#a1e196;">(-${price.discount_percent}%)</span> (原价: ${price.initial_formatted})`;
+            }
+            addRow('价格', priceHtml);
+        }
+        
+        if (storeData.platforms) {
+            let platformsHtml = '';
+            if (storeData.platforms.windows) platformsHtml += `<span class="platform-icon" title="Windows">🪟</span>`;
+            if (storeData.platforms.mac) platformsHtml += `<span class="platform-icon" title="macOS"></span>`;
+            if (storeData.platforms.linux) platformsHtml += `<span class="platform-icon" title="Linux / SteamOS">🐧</span>`;
+            addRow('支持平台', platformsHtml);
+        }
+        
+        if (storeData.metacritic) {
+            addRow('Metacritic 评分', `<a href="${storeData.metacritic.url}" target="_blank">${storeData.metacritic.score}</a>`);
+        }
+        
+        if(storeData.genres) {
+            const genresHtml = storeData.genres.map(g => `<span class="api-tag">${g.description}</span>`).join(' ');
+            addRow('分类', genresHtml);
+        }
+        if(storeData.categories) {
+            const categoriesHtml = storeData.categories.map(c => `<span class="api-tag">${c.description}</span>`).join(' ');
+            addRow('小分类', categoriesHtml);
+        }
+    }
     
-    if (storeData && storeData.pc_requirements && Object.keys(storeData.pc_requirements).length > 0) {
+    const storeTagsObject = get(common, 'store_tags', {});
+    const playerTags = Object.values(storeTagsObject)
+        .map(tagId => steamTags.get(tagId))
+        .filter(Boolean);
+    if (playerTags.length > 0) {
+        const tagsHtml = playerTags.map(tagName => `<span class="api-tag">${tagName}</span>`).join(' ');
+        addRow('玩家标签', tagsHtml);
+    }
+    
+    addSection('玩家数据');
+    if (playerCount !== null && playerCount >= 0) { addRow('当前在线人数', playerCount.toLocaleString()); }
+    
+    if (reviewSummary && reviewSummary.total_reviews > 0) {
+        const totalReviews = reviewSummary.total_positive + reviewSummary.total_negative;
+        if (totalReviews > 0) {
+            const positiveRate = (reviewSummary.total_positive / totalReviews * 100).toFixed(1);
+            addRow('好评率', `<b>${positiveRate}%</b> (${reviewSummary.review_score_desc})`);
+            addRow('评测总数', totalReviews.toLocaleString());
+        }
+    }
+    
+    addSection('发布信息');
+    addRow('商店页发行日期', formatChineseDate(get(common, 'steam_release_date')));
+    addRow('发布状态', get(common, 'releasestate'));
+    addRow('最后更新时间', formatChineseDate(get(common, 'last_record_update')));
+    addRow('Last Changenumber', get(common, 'last_changenumber'));
+    
+    if (storeData) {
         addSection('PC 配置要求');
-        if(storeData.pc_requirements.minimum) addRow('最低配置', storeData.pc_requirements.minimum);
-        if(storeData.pc_requirements.recommended) addRow('推荐配置', storeData.pc_requirements.recommended);
+        addRow('最低配置', get(storeData, 'pc_requirements.minimum', '无'));
+        addRow('推荐配置', get(storeData, 'pc_requirements.recommended', '无'));
     }
     
     const localized = get(common, 'name_localized');
-    if (localized && Object.keys(localized).length > 0) {
+    if (localized && Object.keys(localized).length > 1) {
         addSection('本地化名称');
         const langMap = {'english':'英语','japanese':'日语','schinese':'简体中文','tchinese':'繁体中文','french':'法语','german':'德语','italian':'意大利语','koreana':'韩语','spanish':'西班牙语','russian':'俄语','thai':'泰语','portuguese':'葡萄牙语','polish':'波兰语','danish':'丹麦语','dutch':'荷兰语','finnish':'芬兰语','norwegian':'挪威语','swedish':'瑞典语','hungarian':'匈牙利语','czech':'捷克语','romanian':'罗马尼亚语','turkish':'土耳其语','arabic':'阿拉伯语','bulgarian':'保加利亚语','greek':'希腊语','ukrainian':'乌克兰语','vietnamese':'越南语','brazilian':'巴西葡萄牙语','latam':'拉丁美洲西班牙语'};
-        Object.entries(localized).forEach(([lang, name]) => addRow(langMap[lang] || lang, name));
+        Object.entries(localized).forEach(([lang, name]) => {
+            if(lang !== 'schinese') addRow(langMap[lang] || lang, name)
+        });
     }
     
     const langValue = get(data, 'supported_languages');
@@ -657,15 +747,13 @@ function buildApiTable(appData, storeData) {
             }
         });
         langTable += '</tbody></table>';
-        html += `<tr><td colspan="2">${langTable}</td></tr>`;
+        html += `<tr><td></td><td>${langTable}</td></tr>`;
     }
 
     if (storeData && storeData.movies && storeData.movies.length > 0) {
         addSection('宣传影像');
         storeData.movies.forEach(movie => {
-            if (movie.mp4 && movie.mp4.max) {
-                 addRow(movie.name, `<a href="${movie.mp4.max}" target="_blank">${movie.mp4.max}</a>`);
-            }
+            if (movie.mp4 && movie.mp4.max) { addRow(movie.name, `<a href="${movie.mp4.max}" target="_blank">${movie.mp4.max}</a>`); }
         });
     }
 
@@ -673,53 +761,65 @@ function buildApiTable(appData, storeData) {
 }
  
  async function fetchData(appId) {
+    try {
+        await tagsPromise; // Ensure tags are loaded before proceeding
+    } catch (error) {
+        // Error is already logged in loadSteamTags, just continue gracefully
+    }
+
     clearError(); setLoading("正在请求API...");
     saveBtn.disabled = true; goToStoreBtn.disabled = true; scaleSlider.disabled = true; 
     toggleApiBtn.style.display = 'none'; apiViewerContainer.style.display = 'none';
     imageInspector.style.display = 'none'; imageList.innerHTML = ''; urlsBox.value = '';
-    screenshotUrls = [];
-    videoData = [];
+    screenshotUrls = []; videoData = [];
 
     try {
         const proxyUrl = 'https://corsproxy.io/?';
-        const storeApiUrl = `${STORE_API_BASE}${appId}&l=schinese`;
+        const storeApiUrl = `${STORE_API_BASE}${appId}&l=schinese&cc=cn`;
+        const playerApiUrl = `https://api.steampowered.com/ISteamUserStats/GetNumberOfCurrentPlayers/v1/?appid=${appId}`;
+        const reviewsApiUrl = `https://store.steampowered.com/appreviews/${appId}?json=1&language=all`;
         
-        const [steamCmdRes, storeRes] = await Promise.all([
+        const [steamCmdRes, storeRes, playerRes, reviewsRes] = await Promise.all([
             fetch(API_BASE + appId),
-            fetch(proxyUrl + encodeURIComponent(storeApiUrl))
+            fetch(proxyUrl + encodeURIComponent(storeApiUrl)),
+            fetch(proxyUrl + encodeURIComponent(playerApiUrl)),
+            fetch(proxyUrl + encodeURIComponent(reviewsApiUrl))
         ]);
 
         if (!steamCmdRes.ok) throw new Error(`SteamCMD API 请求失败: ${steamCmdRes.status}`);
         
         const steamCmdJson = await steamCmdRes.json();
         const appData = steamCmdJson.data?.[appId];
-        if (!appData) {
-            throw new Error(steamCmdJson.message || "未找到游戏数据或API返回格式无效");
-        }
+        if (!appData) { throw new Error(steamCmdJson.message || "未找到游戏数据或API返回格式无效"); }
         
         let storeData = null;
         if (storeRes.ok) {
             const storeJson = await storeRes.json();
-            const storeResult = storeJson[appId];
-            if (storeResult?.success) {
-                storeData = storeResult.data;
-            }
-        } else {
-             console.warn(`商店 API 请求失败: ${storeRes.status}`);
-        }
+            if (storeJson[appId]?.success) { storeData = storeJson[appId].data; }
+        } else { console.warn(`商店 API 请求失败: ${storeRes.status}`); }
         
-        buildApiTable(appData, storeData);
+        let playerCount = null;
+        if (playerRes.ok) {
+            const playerJson = await playerRes.json();
+            if (playerJson.response?.result === 1) { playerCount = playerJson.response.player_count; }
+        } else { console.warn(`玩家数量 API 请求失败: ${playerRes.status}`); }
+
+        let reviewSummary = null;
+        if (reviewsRes.ok) {
+            const reviewsJson = await reviewsRes.json();
+            if (reviewsJson.success === 1) { reviewSummary = reviewsJson.query_summary; }
+        } else { console.warn(`评测 API 请求失败: ${reviewsRes.status}`); }
+        
+        buildApiTable(appData, storeData, playerCount, reviewSummary);
         toggleApiBtn.style.display = 'block';
         
         setLoading("正在加载拼图资源...");
-        
-        let gameName = appData.common?.name_localized?.schinese || appData.common?.metacritic_name || appData.common?.name || "";
+        let gameName = get(appData, 'common.name_localized.schinese', get(appData, 'common.name', ''));
         customText = `3DM《${gameName}》专区`;
         document.getElementById("customText").value = customText;
         
         const assetsFull = appData.common?.library_assets_full;
         if (!assetsFull) throw new Error("缺少 library_assets_full 数据");
-        
         const heroPath = assetsFull.library_hero?.image?.english;
         let logoPath = assetsFull.library_logo?.image?.schinese || assetsFull.library_logo?.image?.english;
         if (!heroPath) throw new Error("未找到 library_hero 图片");
@@ -738,18 +838,12 @@ function buildApiTable(appData, storeData) {
         drawHero(heroImg);
         if(logoImg.complete && logoImg.naturalWidth > 0) {
            logoScale = (0.2 * canvas.width) / logoImg.width;
-           const logoW = logoImg.width * logoScale;
-           const logoH = logoImg.height * logoScale;
-           logoX = (canvas.width - logoW) / 2;
-           logoY = (canvas.height - logoH) / 2;
-           
+           logoX = (canvas.width - (logoImg.width * logoScale)) / 2;
+           logoY = (canvas.height - (logoImg.height * logoScale)) / 2;
            scaleSlider.value = Math.round(logoScale * 100);
            scalePercent.textContent = `${Math.round(logoScale * 100)}%`;
            scaleSlider.disabled = false;
-        } else { 
-           logoImg.src = ''; 
-           scaleSlider.disabled = true; 
-        }
+        } else { logoImg.src = ''; scaleSlider.disabled = true; }
 
         saveBtn.disabled = false;
         goToStoreBtn.disabled = false;
@@ -822,31 +916,20 @@ function buildApiTable(appData, storeData) {
             canvas.width = targetWidth;
             canvas.height = targetHeight;
             const ctx = canvas.getContext('2d');
-            
             const sourceAspect = img.width / img.height;
             const targetAspect = targetWidth / targetHeight;
             let sx, sy, sWidth, sHeight;
 
             if (sourceAspect > targetAspect) {
-                sHeight = img.height;
-                sWidth = sHeight * targetAspect;
-                sx = (img.width - sWidth) / 2;
-                sy = 0;
+                sHeight = img.height; sWidth = sHeight * targetAspect;
+                sx = (img.width - sWidth) / 2; sy = 0;
             } else {
-                sWidth = img.width;
-                sHeight = sWidth / targetAspect;
-                sx = 0;
-                sy = (img.height - sHeight) / 2;
+                sWidth = img.width; sHeight = sWidth / targetAspect;
+                sx = 0; sy = (img.height - sHeight) / 2;
             }
-            
             ctx.drawImage(img, sx, sy, sWidth, sHeight, 0, 0, targetWidth, targetHeight);
-            
             canvas.toBlob(blob => {
-                if (blob) {
-                    resolve(blob);
-                } else {
-                    reject(new Error('Canvas toBlob failed'));
-                }
+                if (blob) { resolve(blob); } else { reject(new Error('Canvas toBlob failed')); }
             }, 'image/png');
         };
         img.onerror = () => reject(new Error(`图片加载失败: ${sourceUrl}`));
@@ -854,18 +937,14 @@ function buildApiTable(appData, storeData) {
  }
  
  async function autoCropAndZip() {
-    const appId = appIdInput.value.trim();
-    if (!appId) return;
+    const appId = appIdInput.value.trim(); if (!appId) return;
     const zip = new JSZip();
-    
     const findImage = (resolution) => {
         const urls = imageCategories[resolution] || [];
         return urls.find(u => u.includes('schinese')) || urls[0] || null;
     };
-
     const source920 = findImage('920x430');
     const source300 = findImage('300x450');
-    
     let tasks = [];
 
     if (source300) {
@@ -876,13 +955,9 @@ function buildApiTable(appData, storeData) {
                 if (!response.ok) throw new Error('Network response was not ok.');
                 const blob = await response.blob();
                 zip.file(`${appId}_300x450.png`, blob);
-            } catch (e) {
-                showError(`获取 300x450 图失败: ${e.message}`);
-            }
+            } catch (e) { showError(`获取 300x450 图失败: ${e.message}`); }
         });
-    } else {
-        showError("未找到 300x450 图片。");
-    }
+    } else { showError("未找到 300x450 图片。"); }
 
     if (source920) {
         const cropTargets = [ { w: 474, h: 242 }, { w: 497, h: 278 }, { w: 300, h: 180 } ];
@@ -892,30 +967,14 @@ function buildApiTable(appData, storeData) {
                     setLoading(`正在裁剪 ${target.w}x${target.h} 图...`);
                     const blob = await performCropAndGetBlob(source920, target.w, target.h);
                     zip.file(`${appId}_${target.w}x${target.h}.png`, blob);
-                } catch (e) {
-                    showError(`裁剪 ${target.w}x${target.h} 失败: ${e.message}`);
-                }
+                } catch (e) { showError(`裁剪 ${target.w}x${target.h} 失败: ${e.message}`); }
             });
         });
-    } else {
-        showError("未找到 920x430 图片用于裁剪。");
-    }
+    } else { showError("未找到 920x430 图片用于裁剪。"); }
 
-    if (tasks.length === 0) {
-        clearLoading();
-        showError("未找到任何符合条件的图片。");
-        return;
-    }
-
-    for (const task of tasks) {
-        await task();
-    }
-
-    if (Object.keys(zip.files).length === 0) {
-        clearLoading();
-        showError("所有图片处理均失败，无法创建 ZIP。");
-        return;
-    }
+    if (tasks.length === 0) { clearLoading(); showError("未找到任何符合条件的图片。"); return; }
+    for (const task of tasks) { await task(); }
+    if (Object.keys(zip.files).length === 0) { clearLoading(); showError("所有图片处理均失败，无法创建 ZIP。"); return; }
     
     setLoading('正在生成 ZIP 文件...');
     try {
@@ -930,34 +989,19 @@ function buildApiTable(appData, storeData) {
  }
 
  async function downloadAssetsAsZip(assets, zipFilename) {
-    const zip = new JSZip();
-    let fetchedCount = 0;
-    
+    const zip = new JSZip(); let fetchedCount = 0;
     const assetPromises = assets.map(async (asset) => {
         try {
             const response = await fetch(asset.url);
             if (!response.ok) throw new Error(`Failed to fetch ${asset.filename}`);
             const blob = await response.blob();
-            fetchedCount++;
-            setLoading(`正在获取资源 (${fetchedCount}/${assets.length})...`);
+            fetchedCount++; setLoading(`正在获取资源 (${fetchedCount}/${assets.length})...`);
             return { filename: asset.filename, blob: blob };
-        } catch (e) {
-            console.error(e);
-            showError(`获取 ${asset.filename} 失败`);
-            return null;
-        }
+        } catch (e) { console.error(e); showError(`获取 ${asset.filename} 失败`); return null; }
     });
-
     const fetchedAssets = (await Promise.all(assetPromises)).filter(Boolean);
-
-    if (fetchedAssets.length === 0) {
-        showError("所有资源获取失败，无法创建 ZIP 文件。");
-        clearLoading();
-        return;
-    }
-
+    if (fetchedAssets.length === 0) { showError("所有资源获取失败，无法创建 ZIP 文件。"); clearLoading(); return; }
     fetchedAssets.forEach(asset => zip.file(asset.filename, asset.blob));
-
     setLoading('正在生成 ZIP 文件，请稍候...');
     try {
         const content = await zip.generateAsync({ type: "blob" });
@@ -971,33 +1015,36 @@ function buildApiTable(appData, storeData) {
 }
 
  async function downloadAllScreenshots() {
-    if (screenshotUrls.length === 0) {
-        showError("没有可下载的截图。");
-        return;
-    }
-    const appId = appIdInput.value.trim();
-    if (!appId) return;
-    const assetsToZip = screenshotUrls.map((url, i) => ({
-        url: url,
-        filename: `${appId}_screenshot_${i + 1}.jpg`
-    }));
+    if (screenshotUrls.length === 0) { showError("没有可下载的截图。"); return; }
+    const appId = appIdInput.value.trim(); if (!appId) return;
+    const assetsToZip = screenshotUrls.map((url, i) => ({ url: url, filename: `${appId}_screenshot_${i + 1}.jpg` }));
     await downloadAssetsAsZip(assetsToZip, `${appId}_screenshots.zip`);
+ }
+
+ function loadSteamTags() {
+    const proxyUrl = 'https://corsproxy.io/?';
+    const tagsApiUrl = 'https://store.steampowered.com/tagdata/populartags/schinese';
+    return fetch(proxyUrl + encodeURIComponent(tagsApiUrl))
+        .then(response => {
+            if (!response.ok) throw new Error('Failed to fetch Steam tags');
+            return response.json();
+        })
+        .then(tagsData => {
+            tagsData.forEach(tag => steamTags.set(String(tag.tagid), tag.name));
+            console.log(`Loaded ${steamTags.size} Steam tags.`);
+        })
+        .catch(error => {
+            console.error("Error fetching Steam tags:", error);
+            // Don't show an error to the user, just log it. The app can function without tags.
+        });
  }
 
  document.getElementById("fetchBtn").addEventListener("click", () => {
      const rawInput = appIdInput.value.trim();
      let appId = rawInput;
-     
      const urlMatch = rawInput.match(/store\.steampowered\.com\/app\/(\d+)/);
-     if (urlMatch && urlMatch[1]) {
-         appId = urlMatch[1];
-         appIdInput.value = appId;
-     }
-
-     if (!/^\d+$/.test(appId)) { 
-        showError("请输入有效的 Steam App ID 或商店链接"); 
-        return; 
-     }
+     if (urlMatch && urlMatch[1]) { appId = urlMatch[1]; appIdInput.value = appId; }
+     if (!/^\d+$/.test(appId)) { showError("请输入有效的 Steam App ID 或商店链接"); return; }
      fetchData(appId);
  });
  
@@ -1005,18 +1052,17 @@ function buildApiTable(appData, storeData) {
      const isHidden = apiViewerContainer.style.display === 'none';
      apiViewerContainer.style.display = isHidden ? 'block' : 'none';
      toggleApiBtn.textContent = isHidden ? '隐藏 API 数据' : '查看 API 数据';
+     if(isHidden) { window.scroll({ top: toggleApiBtn.offsetTop - 20, behavior: 'smooth' }); }
  });
  
  document.getElementById("autoCropBtn").addEventListener('click', autoCropAndZip);
  document.getElementById("downloadScreenshotsBtn").addEventListener('click', downloadAllScreenshots);
  
  window.addEventListener('DOMContentLoaded', () => {
-     const params = new URLSearchParams(window.location.search);
-     const appIdFromUrl = params.get("appid");
-     if (appIdFromUrl) {
-         appIdInput.value = appIdFromUrl;
-         fetchData(appIdFromUrl);
-     }
+    tagsPromise = loadSteamTags(); // Pre-fetch all tags on page load and store the promise
+    const params = new URLSearchParams(window.location.search);
+    const appIdFromUrl = params.get("appid");
+    if (appIdFromUrl) { appIdInput.value = appIdFromUrl; fetchData(appIdFromUrl); }
  });
 
 </script>
