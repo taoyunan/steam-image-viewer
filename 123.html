@@ -222,20 +222,22 @@
 
     <h4>图片探查器</h4>
     <ul>
-        <li><strong>全面搜刮</strong>：自动解析 API 数据，找出所有与该游戏相关的图片资源链接（**包含官方商店截图**）。</li>
-        <li><strong>智能分组</strong>：将所有图片按分辨率进行归类，方便快速查找。</li>
-        <li><strong>一键下载所有截图</strong>：新增专用按钮，一键下载所有高清商店截图。</li>
+        <li><strong>全面搜刮</strong>：自动解析 API 数据，找出所有与该游戏相关的图片与视频资源。</li>
+        <li><strong>智能分组</strong>：将所有图片按分辨率进行归类，并将视频单独分组。</li>
+        <li><strong>截图置顶</strong>：<code>1920x1080</code> 的图片会被识别为“截图”并置顶显示。</li>
+        <li><strong>视频支持</strong>：新增“宣传影像”分类，可预览封面、播放和下载视频。</li>
+        <li><strong>打包下载截图</strong>：专用按钮一键将所有高清商店截图打包为 ZIP 文件下载。</li>
     </ul>
 
     <h4>高级图片裁剪</h4>
     <ul>
-        <li><strong>手动精裁</strong>：内置强大的图片裁剪工具，支持自由选择、固定比例裁剪，并可指定输出分辨率。</li>
-        <li><strong>一键自动化</strong>：提供“<strong>自动裁剪封面图</strong>”功能，一键完成以下任务：
+        <li><strong>手动精裁</strong>：内置强大的图片裁剪工具，支持自由选择、固定比例裁剪。</li>
+        <li><strong>实时比例</strong>：当输入目标分辨率时，裁剪框会自动锁定为该宽高比。</li>
+        <li><strong>打包裁剪</strong>：提供“<strong>自动裁剪并打包</strong>”功能，一键完成以下任务并打包成 ZIP 下载：
             <ol>
                 <li>自动寻找 <code>920x430</code> 的横向主图（优先中文版）。</li>
-                <li>将其自动裁剪并下载为 <code>474x242</code>, <code>497x278</code>, <code>300x180</code> 三种常用尺寸。</li>
-                <li>自动寻找 <code>300x450</code> 的纵向封面图（优先中文版）。</li>
-                <li>直接下载该 <code>300x450</code> 原图。</li>
+                <li>将其自动裁剪为 <code>474x242</code>, <code>497x278</code>, <code>300x180</code> 三种尺寸。</li>
+                <li>自动寻找并包含 <code>300x450</code> 的纵向封面图（优先中文版）。</li>
             </ol>
         </li>
     </ul>
@@ -302,8 +304,8 @@
 <div id="imageInspector" style="display: none;">
  <h3>图片探查器</h3>
   <div class="inspector-controls">
-     <button id="autoCropBtn" style="background-color: #22c55e;">自动裁剪封面图</button>
-     <button id="downloadScreenshotsBtn" style="background-color: #0ea5e9;">一键下载所有截图</button>
+     <button id="autoCropBtn" style="background-color: #22c55e;">自动裁剪并打包</button>
+     <button id="downloadScreenshotsBtn" style="background-color: #0ea5e9;">打包下载所有截图</button>
   </div>
  <div id="imageList"></div>
  <div class="url-actions-container">
@@ -343,6 +345,8 @@
 
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.0/FileSaver.min.js"></script>
 <script>
  const API_BASE = "https://api.steamcmd.net/v1/info/";
  const STORE_API_BASE = "https://store.steampowered.com/api/appdetails?appids=";
@@ -369,6 +373,8 @@
  const apiTable = document.getElementById("api-table");
  const cropModal = document.getElementById('cropModal');
  const cropImage = document.getElementById('cropImage');
+ const cropWidthInput = document.getElementById('cropWidth');
+ const cropHeightInput = document.getElementById('cropHeight');
  
  // Global state variables
  let heroImg = new Image();
@@ -384,6 +390,7 @@
  let dragOffsetX = 0, dragOffsetY = 0;
  let cropper = null;
  let imageCategories = {};
+ let videoData = [];
  let screenshotUrls = [];
 
  function clearError() { errorBox.textContent = ""; }
@@ -456,9 +463,10 @@
      return `${IMG_BASE}${encodeURIComponent(appid)}/${clean}`;
  }
 
- function showImages(urls) {
-     if (urls.length === 0) { 
-         imageList.innerHTML = '<p>没有识别到任何图片资源。</p>'; 
+ function showAssets(urls, videos) {
+     imageList.innerHTML = ''; 
+     if (urls.length === 0 && videos.length === 0) { 
+         imageList.innerHTML = '<p>没有识别到任何图片或视频资源。</p>'; 
          return; 
      } 
      imageList.innerHTML = `<p style="color: #60a5fa; text-align: center;">正在获取 ${urls.length} 张图片尺寸用于分组，请稍候...</p>`; 
@@ -474,55 +482,94 @@
              if (!imageCategories[res]) imageCategories[res] = []; 
              imageCategories[res].push(u); 
          }); 
-         renderCategories(imageCategories); 
+         renderCategories(imageCategories, videos); 
      }); 
  }
- function renderCategories(categories) {
-     imageList.innerHTML = ''; 
+ 
+ function createCategoryElement(title, items, isVideo = false) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'category';
+    const header = document.createElement('div');
+    header.className = 'category-header';
+    header.innerHTML = `<h4>${title} (${items.length} ${isVideo ? '个' : '张'})</h4><button class="toggle-btn">展开</button>`;
+    wrapper.appendChild(header);
+    const cardGrid = document.createElement('div');
+    cardGrid.className = 'card-grid';
+
+    items.forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        if (!isVideo) {
+            const u = item;
+            if (u.toLowerCase().includes('schinese')) {
+                card.classList.add('highlight-schinese');
+            }
+            const langMatch = u.match(/(schinese|tchinese|english|japanese|koreana|french|german|spanish|latam)/i);
+            const lang = langMatch ? langMatch[0] : '通用';
+            card.innerHTML = `<img src="${u}" alt="image" class="thumb" loading="lazy" onclick="this.style.objectFit = this.style.objectFit === 'contain' ? 'cover' : 'contain'"><div class="meta">${lang}</div><div class="actions"><button data-url="${u}" class="open-btn">打开</button><button data-url="${u}" class="copy-btn">复制</button><button data-url="${u}" class="crop-btn">裁剪</button><button data-url="${u}" class="dl-btn">下载</button></div>`;
+        } else { // Video card
+            const video = item;
+            card.innerHTML = `
+                <img src="${video.thumbnail}" alt="${video.name}" class="thumb" loading="lazy">
+                <div class="meta" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${video.name}">${video.name}</div>
+                <div class="actions">
+                    <button data-url="${video.thumbnail}" class="open-btn">封面</button>
+                    <button data-url="${video.thumbnail}" class="dl-btn">下封面</button>
+                    <button data-url="${video.mp4.max}" class="open-btn" style="background-color:#e11d48;">播放</button>
+                    <button data-url="${video.mp4.max}" class="dl-btn" style="background-color:#e11d48;">下视频</button>
+                </div>`;
+        }
+        cardGrid.appendChild(card);
+    });
+
+    wrapper.appendChild(cardGrid);
+    const toggleBtn = header.querySelector('.toggle-btn');
+    toggleBtn.onclick = () => {
+        const isHidden = cardGrid.style.display === 'none';
+        cardGrid.style.display = isHidden ? 'grid' : 'none';
+        toggleBtn.textContent = isHidden ? '折叠' : '展开';
+    };
+    return wrapper;
+ }
+
+ function renderCategories(categories, videos) {
+     imageList.innerHTML = '';
+     
+     if (categories['1920x1080']) {
+         const screenshotElement = createCategoryElement('截图', categories['1920x1080']);
+         imageList.appendChild(screenshotElement);
+         delete categories['1920x1080'];
+     }
+     
+     if (videos && videos.length > 0) {
+        const videoElement = createCategoryElement('宣传影像', videos, true);
+        imageList.appendChild(videoElement);
+     }
+
      const sortedKeys = Object.keys(categories).sort((a, b) => { 
          if (a === '未知尺寸') return 1; 
          if (b === '未知尺寸') return -1; 
          const [wA, hA] = a.split('x').map(Number); 
          const [wB, hB] = b.split('x').map(Number); 
-         const areaA = wA * hA;
-         const areaB = wB * hB;
-         return areaB - areaA;
+         return (wB * hB) - (wA * hA);
      }); 
      sortedKeys.forEach(res => { 
          const urls = categories[res]; 
-         const wrapper = document.createElement('div'); 
-         wrapper.className = 'category'; 
-         const header = document.createElement('div'); 
-         header.className = 'category-header'; 
-         header.innerHTML = `<h4>分辨率: ${res} (${urls.length} 张)</h4><button class="toggle-btn">展开</button>`; 
-         wrapper.appendChild(header); 
-         const cardGrid = document.createElement('div'); 
-         cardGrid.className = 'card-grid'; 
-         urls.forEach(u => { 
-             const card = document.createElement('div'); 
-             card.className = 'card'; 
-             if (u.toLowerCase().includes('schinese')) { card.classList.add('highlight-schinese'); } 
-             const langMatch = u.match(/(schinese|tchinese|english|japanese|koreana|french|german|spanish|latam)/i); 
-             const lang = langMatch ? langMatch[0] : '通用'; 
-             card.innerHTML = `<img src="${u}" alt="image" class="thumb" loading="lazy" onclick="this.style.objectFit = this.style.objectFit === 'contain' ? 'cover' : 'contain'"><div class="meta">${lang}</div><div class="actions"><button data-url="${u}" class="open-btn">打开</button><button data-url="${u}" class="copy-btn">复制</button><button data-url="${u}" class="crop-btn">裁剪</button><button data-url="${u}" class="dl-btn">下载</button></div>`; 
-             cardGrid.appendChild(card); 
-         }); 
-         wrapper.appendChild(cardGrid); 
-         imageList.appendChild(wrapper); 
-         const toggleBtn = header.querySelector('.toggle-btn'); 
-         toggleBtn.onclick = () => { 
-             const isHidden = cardGrid.style.display === 'none'; 
-             cardGrid.style.display = isHidden ? 'grid' : 'none'; 
-             toggleBtn.textContent = isHidden ? '折叠' : '展开'; 
-         }; 
+         const categoryElement = createCategoryElement(`分辨率: ${res}`, urls);
+         imageList.appendChild(categoryElement);
      }); 
  }
+
  imageList.addEventListener('click', e => { const target = e.target; const url = target.dataset.url; if (!url) return; if (target.classList.contains('open-btn')) { window.open(url, '_blank'); } else if (target.classList.contains('copy-btn')) { navigator.clipboard.writeText(url).then(() => { setLoading('链接已复制!'); setTimeout(clearLoading, 1500); }); } else if (target.classList.contains('dl-btn')) { downloadImage(url); } else if (target.classList.contains('crop-btn')) { cropImage.src = url; cropModal.style.display = 'flex'; cropImage.onload = () => { if(cropper) { cropper.destroy(); } cropper = new Cropper(cropImage, { viewMode: 1, background: false, autoCropArea: 0.9 }); }; } });
  document.getElementById('copyAllBtn').addEventListener('click', () => { if (!urlsBox.value) return; navigator.clipboard.writeText(urlsBox.value).then(() => { setLoading('全部链接已复制!'); setTimeout(clearLoading, 1500); }); });
- document.getElementById('exportTxtBtn').addEventListener('click', () => { if (!urlsBox.value) return; const blob = new Blob([urlsBox.value], {type:'text/plain;charset=utf-8'}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `steam_${document.getElementById("appId").value.trim()}_images.txt`; a.click(); URL.revokeObjectURL(a.href); });
- document.getElementById('cropDownloadBtn').addEventListener('click', () => { if (!cropper) return; const cropWidth = parseInt(document.getElementById('cropWidth').value, 10); const cropHeight = parseInt(document.getElementById('cropHeight').value, 10); const options = {}; if (!isNaN(cropWidth) && cropWidth > 0) options.width = cropWidth; if (!isNaN(cropHeight) && cropHeight > 0) options.height = cropHeight; const canvas = cropper.getCroppedCanvas(options); const link = document.createElement('a'); link.download = `cropped_${document.getElementById("appId").value.trim()}_${Date.now()}.png`; link.href = canvas.toDataURL('image/png'); link.click(); document.getElementById('cropCancelBtn').click(); });
- document.getElementById('cropCancelBtn').addEventListener('click', () => { cropModal.style.display = 'none'; if (cropper) { cropper.destroy(); cropper = null; } cropImage.src = ''; });
- document.querySelectorAll('.aspect-btn').forEach(btn => { btn.addEventListener('click', (e) => { if (!cropper) return; const ratio = e.target.dataset.ratio; cropper.setAspectRatio(ratio === 'free' ? NaN : parseFloat(ratio)); }); });
+ document.getElementById('exportTxtBtn').addEventListener('click', () => { if (!urlsBox.value) return; const blob = new Blob([urlsBox.value], {type:'text/plain;charset=utf-8'}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `steam_${document.getElementById("appId").value.trim()}_assets.txt`; a.click(); URL.revokeObjectURL(a.href); });
+ document.getElementById('cropDownloadBtn').addEventListener('click', () => { if (!cropper) return; const cropWidth = parseInt(cropWidthInput.value, 10); const cropHeight = parseInt(cropHeightInput.value, 10); const options = {}; if (!isNaN(cropWidth) && cropWidth > 0) options.width = cropWidth; if (!isNaN(cropHeight) && cropHeight > 0) options.height = cropHeight; const canvas = cropper.getCroppedCanvas(options); const link = document.createElement('a'); link.download = `cropped_${document.getElementById("appId").value.trim()}_${Date.now()}.png`; link.href = canvas.toDataURL('image/png'); link.click(); document.getElementById('cropCancelBtn').click(); });
+ document.getElementById('cropCancelBtn').addEventListener('click', () => { cropModal.style.display = 'none'; if (cropper) { cropper.destroy(); cropper = null; } cropImage.src = ''; cropWidthInput.value = ''; cropHeightInput.value = ''; });
+ document.querySelectorAll('.aspect-btn').forEach(btn => { btn.addEventListener('click', (e) => { if (!cropper) return; const ratio = e.target.dataset.ratio; cropper.setAspectRatio(ratio === 'free' ? NaN : parseFloat(ratio)); cropWidthInput.value = ''; cropHeightInput.value = ''; }); });
+ 
+ function updateCropAspectRatio() { if (!cropper) return; const width = parseFloat(cropWidthInput.value); const height = parseFloat(cropHeightInput.value); if (width > 0 && height > 0) { cropper.setAspectRatio(width / height); } else { cropper.setAspectRatio(NaN); } }
+ cropWidthInput.addEventListener('input', updateCropAspectRatio);
+ cropHeightInput.addEventListener('input', updateCropAspectRatio);
 
 function buildApiTable(appData, storeData) {
     const data = appData.data || {};
@@ -626,6 +673,7 @@ function buildApiTable(appData, storeData) {
     apiViewerContainer.style.display = 'none'; showApiBtn.textContent = '查看 API 数据';
     imageInspector.style.display = 'none'; imageList.innerHTML = ''; urlsBox.value = '';
     screenshotUrls = [];
+    videoData = [];
 
     try {
         const proxyUrl = 'https://corsproxy.io/?';
@@ -707,22 +755,32 @@ function buildApiTable(appData, storeData) {
         textY = (canvas.height - textH) / 2 + 30;
         drawAll();
 
-        setLoading("正在解析图片资源...");
+        setLoading("正在解析图片与视频资源...");
         let candidates = findImageCandidates(steamCmdJson);
         let allImageUrls = [...new Set(candidates.map(c => buildFullUrl(appId, c)))];
+        let allAssetUrlsForTxt = [...allImageUrls];
 
         if (storeData?.screenshots) {
             screenshotUrls = storeData.screenshots.map(ss => ss.path_full);
             allImageUrls.push(...screenshotUrls);
             allImageUrls = [...new Set(allImageUrls)];
+            allAssetUrlsForTxt.push(...screenshotUrls);
+        }
+        
+        if (storeData?.movies) {
+            videoData = storeData.movies.filter(m => m.mp4 && m.mp4.max);
+            videoData.forEach(v => {
+                allAssetUrlsForTxt.push(v.thumbnail);
+                allAssetUrlsForTxt.push(v.mp4.max);
+            });
         }
 
         imageInspector.style.display = 'block';
-        if (allImageUrls.length > 0) {
-            urlsBox.value = allImageUrls.join('\n');
-            showImages(allImageUrls);
+        if (allImageUrls.length > 0 || videoData.length > 0) {
+            urlsBox.value = [...new Set(allAssetUrlsForTxt)].join('\n');
+            showAssets(allImageUrls, videoData);
         } else {
-            imageList.innerHTML = '<p>未能自动识别到任何图片资源。</p>';
+            imageList.innerHTML = '<p>未能自动识别到任何图片或视频资源。</p>';
         }
         clearLoading();
     } catch (e) {
@@ -730,19 +788,28 @@ function buildApiTable(appData, storeData) {
         clearLoading();
     }
 }
+ 
  function downloadImage(url, filename) {
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename || url.split('/').pop().split('?')[0] || `image.jpg`;
-    a.target = '_blank';
-    a.click();
+     setLoading('正在准备下载...');
+     fetch(url)
+        .then(response => response.blob())
+        .then(blob => {
+            saveAs(blob, filename || url.split('/').pop().split('?')[0] || `asset.tmp`);
+            clearLoading();
+        })
+        .catch(err => {
+            showError(`下载失败: ${err.message}. 正在尝试直接打开...`);
+            clearLoading();
+            window.open(url, '_blank');
+        });
  }
 
- async function performCropAndDownload(sourceUrl, targetWidth, targetHeight, filename) {
+ async function performCropAndGetBlob(sourceUrl, targetWidth, targetHeight) {
     return new Promise((resolve, reject) => {
         const img = new Image();
         img.crossOrigin = 'anonymous';
-        img.src = sourceUrl;
+        const proxyUrl = 'https://corsproxy.io/?';
+        img.src = proxyUrl + encodeURIComponent(sourceUrl);
         img.onload = () => {
             const canvas = document.createElement('canvas');
             canvas.width = targetWidth;
@@ -768,68 +835,132 @@ function buildApiTable(appData, storeData) {
             ctx.drawImage(img, sx, sy, sWidth, sHeight, 0, 0, targetWidth, targetHeight);
             
             canvas.toBlob(blob => {
-                downloadImage(URL.createObjectURL(blob), filename);
-                resolve();
+                if (blob) {
+                    resolve(blob);
+                } else {
+                    reject(new Error('Canvas toBlob failed'));
+                }
             }, 'image/png');
         };
         img.onerror = () => reject(new Error(`图片加载失败: ${sourceUrl}`));
     });
  }
  
- async function autoCropAndDownload() {
-    setLoading("正在执行一键裁剪...");
+ async function autoCropAndZip() {
     const appId = document.getElementById("appId").value.trim();
+    const zip = new JSZip();
     
     const findImage = (resolution) => {
         const urls = imageCategories[resolution] || [];
-        if (urls.length === 0) return null;
-        const schineseUrl = urls.find(u => u.includes('schinese'));
-        return schineseUrl || urls[0];
+        return urls.find(u => u.includes('schinese')) || urls[0] || null;
     };
 
     const source920 = findImage('920x430');
     const source300 = findImage('300x450');
     
     let tasks = [];
-    let foundAny = false;
 
     if (source300) {
-        foundAny = true;
-        tasks.push(() => {
-            setLoading("正在下载 300x450 图...");
-            downloadImage(source300, `${appId}_300x450.png`);
-            return Promise.resolve();
+        tasks.push(async () => {
+            try {
+                setLoading("正在获取 300x450 图...");
+                const response = await fetch(source300);
+                if (!response.ok) throw new Error('Network response was not ok.');
+                const blob = await response.blob();
+                zip.file(`${appId}_300x450.png`, blob);
+            } catch (e) {
+                showError(`获取 300x450 图失败: ${e.message}`);
+            }
         });
     } else {
-        showError("未找到 300x450 分辨率的图片。");
+        showError("未找到 300x450 图片。");
     }
 
     if (source920) {
-        foundAny = true;
         const cropTargets = [ { w: 474, h: 242 }, { w: 497, h: 278 }, { w: 300, h: 180 } ];
         cropTargets.forEach(target => {
-            tasks.push(() => {
-                setLoading(`正在裁剪 ${target.w}x${target.h} 图...`);
-                return performCropAndDownload(source920, target.w, target.h, `${appId}_${target.w}x${target.h}.png`);
+            tasks.push(async () => {
+                try {
+                    setLoading(`正在裁剪 ${target.w}x${target.h} 图...`);
+                    const blob = await performCropAndGetBlob(source920, target.w, target.h);
+                    zip.file(`${appId}_${target.w}x${target.h}.png`, blob);
+                } catch (e) {
+                    showError(`裁剪 ${target.w}x${target.h} 失败: ${e.message}`);
+                }
             });
         });
     } else {
-        showError("未找到 920x430 分辨率的图片用于裁剪。");
+        showError("未找到 920x430 图片用于裁剪。");
     }
 
-    if (!foundAny) {
+    if (tasks.length === 0) {
         clearLoading();
         showError("未找到任何符合条件的图片。");
         return;
     }
 
     for (const task of tasks) {
-        try { await task(); } catch (error) { showError(error.message); }
+        await task();
+    }
+
+    if (Object.keys(zip.files).length === 0) {
+        clearLoading();
+        showError("所有图片处理均失败，无法创建 ZIP。");
+        return;
     }
     
-    clearLoading(); setLoading("所有任务已完成！");
-    setTimeout(clearLoading, 2000);
+    setLoading('正在生成 ZIP 文件...');
+    try {
+        const content = await zip.generateAsync({ type: "blob" });
+        saveAs(content, `${appId}_covers.zip`);
+        setLoading('打包下载已开始！');
+    } catch (e) {
+        showError(`生成 ZIP 失败: ${e.message}`);
+    } finally {
+        setTimeout(clearLoading, 2000);
+    }
  }
+
+ async function downloadAssetsAsZip(assets, zipFilename) {
+    const zip = new JSZip();
+    let fetchedCount = 0;
+    
+    const assetPromises = assets.map(async (asset) => {
+        try {
+            const response = await fetch(asset.url);
+            if (!response.ok) throw new Error(`Failed to fetch ${asset.filename}`);
+            const blob = await response.blob();
+            fetchedCount++;
+            setLoading(`正在获取资源 (${fetchedCount}/${assets.length})...`);
+            return { filename: asset.filename, blob: blob };
+        } catch (e) {
+            console.error(e);
+            showError(`获取 ${asset.filename} 失败`);
+            return null;
+        }
+    });
+
+    const fetchedAssets = (await Promise.all(assetPromises)).filter(Boolean);
+
+    if (fetchedAssets.length === 0) {
+        showError("所有资源获取失败，无法创建 ZIP 文件。");
+        clearLoading();
+        return;
+    }
+
+    fetchedAssets.forEach(asset => zip.file(asset.filename, asset.blob));
+
+    setLoading('正在生成 ZIP 文件，请稍候...');
+    try {
+        const content = await zip.generateAsync({ type: "blob" });
+        saveAs(content, zipFilename);
+        setLoading('ZIP 文件已开始下载！');
+    } catch (e) {
+        showError(`生成 ZIP 文件失败: ${e.message}`);
+    } finally {
+        setTimeout(clearLoading, 2000);
+    }
+}
 
  async function downloadAllScreenshots() {
     if (screenshotUrls.length === 0) {
@@ -837,24 +968,11 @@ function buildApiTable(appData, storeData) {
         return;
     }
     const appId = document.getElementById("appId").value.trim();
-    for (let i = 0; i < screenshotUrls.length; i++) {
-        setLoading(`正在下载截图 (${i + 1}/${screenshotUrls.length})...`);
-        const url = screenshotUrls[i];
-        const filename = `${appId}_screenshot_${i + 1}.jpg`;
-        try {
-            const response = await fetch(url);
-            const blob = await response.blob();
-            const objectUrl = URL.createObjectURL(blob);
-            downloadImage(objectUrl, filename);
-            URL.revokeObjectURL(objectUrl);
-        } catch(e) {
-            showError(`下载截图 ${i+1} 失败，尝试直接打开...`);
-            downloadImage(url, filename);
-        }
-        await new Promise(resolve => setTimeout(resolve, 300));
-    }
-    setLoading("所有截图下载任务已发起！");
-    setTimeout(clearLoading, 2000);
+    const assetsToZip = screenshotUrls.map((url, i) => ({
+        url: url,
+        filename: `${appId}_screenshot_${i + 1}.jpg`
+    }));
+    await downloadAssetsAsZip(assetsToZip, `${appId}_screenshots.zip`);
  }
 
  document.getElementById("fetchBtn").addEventListener("click", () => {
@@ -864,16 +982,11 @@ function buildApiTable(appData, storeData) {
  });
  
  showApiBtn.addEventListener('click', () => {
-     if (apiViewerContainer.style.display === 'none') {
-         apiViewerContainer.style.display = 'block';
-         showApiBtn.textContent = '隐藏 API 数据';
-     } else {
-         apiViewerContainer.style.display = 'none';
-         showApiBtn.textContent = '查看 API 数据';
-     }
+     apiViewerContainer.style.display = apiViewerContainer.style.display === 'none' ? 'block' : 'none';
+     showApiBtn.textContent = apiViewerContainer.style.display === 'none' ? '查看 API 数据' : '隐藏 API 数据';
  });
  
- document.getElementById("autoCropBtn").addEventListener('click', autoCropAndDownload);
+ document.getElementById("autoCropBtn").addEventListener('click', autoCropAndZip);
  document.getElementById("downloadScreenshotsBtn").addEventListener('click', downloadAllScreenshots);
  
  window.addEventListener('DOMContentLoaded', () => {
