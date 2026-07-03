@@ -12,7 +12,48 @@
  body {
  background: #121417; color: #e0e0e0; font-family: 'Roboto Slab', "微软雅黑", sans-serif;
  display: flex; flex-direction: column; align-items: center;
- padding: 25px 15px 40px; min-height: 100vh;
+ padding: 25px 15px 40px 112px; min-height: 100vh;
+ scroll-behavior: smooth;
+ }
+ body.app-empty {
+ padding-left: 15px; justify-content: center;
+ }
+ body.app-empty .quick-nav,
+ body.app-empty #showEventsBtn,
+ body.app-empty .header-controls,
+ body.app-empty .side-panel,
+ body.app-empty .builder-only,
+ body.app-empty #toggleApiControls,
+ body.app-empty #apiViewerContainer,
+ body.app-empty #videoInspector,
+ body.app-empty #imageInspector {
+ display: none !important;
+ }
+ body.app-empty .main-container {
+ max-width: 720px; min-height: calc(100vh - 80px);
+ display: flex; flex-direction: column; justify-content: center;
+ }
+ body.app-empty .header-container {
+ justify-content: center; margin-bottom: 24px;
+ }
+ body.app-empty h1 {
+ text-align: center; font-size: 2.15rem;
+ }
+ body.app-empty .app-search-controls {
+ max-width: 720px; margin: 0 auto 12px;
+ padding: 14px; background: #1e2433;
+ border: 1px solid #2e3a59; border-radius: 12px;
+ box-shadow: 0 12px 34px rgba(0,0,0,0.35);
+ }
+ body.app-empty #appId {
+ height: 42px; font-size: 15px;
+ }
+ body.app-empty #fetchBtn {
+ height: 42px; padding: 10px 24px; margin-left: 8px !important;
+ }
+ body.app-empty #saveBtn,
+ body.app-empty #goToStoreBtn {
+ display: none;
  }
  .main-container, #imageInspector, #apiViewerContainer {
  width: 100%; max-width: 1200px;
@@ -126,6 +167,37 @@
  #showEventsBtn {
     position: fixed; top: 25px; left: 20px; z-index: 1001;
  }
+ .quick-nav {
+    position: fixed; left: 16px; top: 82px; z-index: 900;
+    width: 88px; padding: 8px; background: rgba(18, 24, 34, 0.94);
+    border: 1px solid #334155; border-radius: 12px;
+    box-shadow: 0 12px 34px rgba(0,0,0,0.42);
+    display: flex; flex-direction: column; gap: 6px;
+ }
+ .quick-nav-title {
+    color: #7dd3fc; font-size: 12px; font-weight: 700;
+    text-align: center; padding: 3px 0 6px;
+    border-bottom: 1px solid rgba(71, 85, 105, 0.7);
+    margin-bottom: 2px;
+ }
+ .quick-nav button {
+    width: 100%; min-height: 34px; padding: 6px 5px;
+    font-size: 12px; line-height: 1.2; background: transparent;
+    color: #cbd5e1; border: 1px solid transparent; box-shadow: none;
+    border-radius: 8px; position: relative;
+ }
+ .quick-nav button::before {
+    content: ""; position: absolute; left: 7px; top: 50%;
+    width: 3px; height: 16px; transform: translateY(-50%);
+    border-radius: 3px; background: transparent;
+ }
+ .quick-nav button:hover:not(:disabled), .quick-nav button.active {
+    background: #1f2a3a; border-color: #3b82f6;
+    color: #fff; box-shadow: inset 0 0 0 1px rgba(96,165,250,0.15);
+ }
+ .quick-nav button:hover:not(:disabled)::before, .quick-nav button.active::before {
+    background: #60a5fa;
+ }
  #tagsListContainer {
     columns: 2;
     column-gap: 20px;
@@ -155,12 +227,15 @@
     color: #a3e635;
  }
 
- #imageInspector {
+ #imageInspector, #videoInspector {
  text-align: left; margin-top: 36px; padding: 20px 25px; background: #1e2433;
  border-radius: 14px; font-size: 15px; line-height: 1.7;
  box-shadow: 0 0 20px #1e2433; border: 1px solid #2e3a59;
  }
- #imageInspector h3 { margin: 0 0 15px; color: #60a5fa; font-weight: 700; text-shadow: 0 0 10px #60a5faaa; }
+ #videoInspector {
+    width: 100%; max-width: 980px;
+ }
+ #imageInspector h3, #videoInspector h3 { margin: 0 0 15px; color: #60a5fa; font-weight: 700; text-shadow: 0 0 10px #60a5faaa; }
  .inspector-controls { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
  #urlsBox { width: 100%; min-height: 120px; resize: vertical; margin-bottom: 15px; }
  .url-actions-container { margin-top: 25px; }
@@ -182,6 +257,63 @@
  .card .actions { display: flex; gap: 8px; width: 100%; flex-wrap: wrap; justify-content: center; }
  .card .actions button { font-size: 12px; padding: 6px 10px; background: #4b6cb7; box-shadow: none; }
  .card .actions button:hover:not(:disabled) { background: #3b82f6; }
+ .video-format-row {
+    display: flex; gap: 6px; flex-wrap: wrap; justify-content: center;
+    width: 100%; padding-top: 2px;
+ }
+ .video-format-row .format-label {
+    width: 100%; color: #aeb9c7; font-size: 12px; text-align: center;
+ }
+ .video-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 16px;
+ }
+ .video-card {
+    background: #23262a; border: 1px solid #334155; border-radius: 10px;
+    overflow: hidden; box-shadow: 0 6px 18px rgba(0,0,0,0.28);
+ }
+ .video-thumb-wrap {
+    position: relative; background: #111827; aspect-ratio: 16 / 9;
+ }
+ .video-thumb {
+    width: 100%; height: 100%; display: block; object-fit: cover;
+ }
+ .video-hd-badge {
+    position: absolute; left: 10px; bottom: 10px;
+    background: rgba(15, 23, 42, 0.86); color: #bfdbfe;
+    border: 1px solid rgba(96,165,250,0.7); border-radius: 6px;
+    padding: 3px 8px; font-size: 12px; font-weight: 700;
+ }
+ .video-card-body {
+    padding: 12px; display: flex; flex-direction: column; gap: 10px;
+ }
+ .video-title {
+    margin: 0; color: #f8fafc; font-size: 15px; line-height: 1.35;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+ }
+ .video-primary-actions, .video-source-actions {
+    display: flex; gap: 8px; flex-wrap: wrap;
+ }
+ .video-primary-actions button, .video-source-actions button {
+    font-size: 12px; padding: 6px 10px; box-shadow: none;
+ }
+ .video-primary-actions button { background: #4b6cb7; }
+ .video-source-list {
+    display: flex; flex-direction: column; gap: 7px;
+ }
+ .video-source-row {
+    display: grid; grid-template-columns: 142px minmax(0, 1fr) auto;
+    align-items: center; gap: 8px; padding: 7px 8px;
+    background: rgba(15,23,42,0.55); border: 1px solid #334155;
+    border-radius: 8px;
+ }
+ .video-source-type { color: #e2e8f0; font-weight: 700; font-size: 12px; }
+ .video-source-quality {
+    color: #93c5fd; font-size: 12px; white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis;
+ }
+ .video-source-actions button { background: #334155; }
+ .video-source-actions button:hover:not(:disabled) { background: #475569; box-shadow: none; }
  
  /* --- NEW UI STYLES FOR API VIEWER --- */
  #apiViewerContainer {
@@ -233,6 +365,8 @@
     margin: 2px; text-decoration: none; border: 1px solid #4b6cb7;
  }
  .api-tag:hover { background-color: #4b6cb7; }
+ .api-link-list { display: flex; flex-direction: column; gap: 6px; }
+ .api-link-list a { display: inline-block; }
  .language-table { width: 100%; margin-top: 5px; border: 1px solid #2e3a59; border-radius: 6px; border-collapse: separate; border-spacing: 0; }
  .language-table th, .language-table td { text-align: left; padding: 6px 8px; border-bottom: 1px solid #2e3a59; }
  .language-table tr:last-child td { border-bottom: none; }
@@ -260,11 +394,33 @@
  .crop-controls .row button, .crop-controls button { font-size: 12px; padding: 6px 12px;}
  .crop-controls input[type="number"] { width: 70px; height: 30px; }
 
+ @media (max-width: 900px) {
+    body { padding-left: 15px; padding-bottom: 92px; }
+    body.app-empty { padding-bottom: 40px; }
+    .quick-nav {
+        left: 10px; right: 10px; top: auto; bottom: 10px; width: auto;
+        flex-direction: row; overflow-x: auto; border-radius: 10px;
+    }
+    .quick-nav-title { display: none; }
+    .quick-nav button { min-width: 64px; }
+    .quick-nav button::before { display: none; }
+    .video-source-row { grid-template-columns: 1fr; }
+ }
+
 </style>
 </head>
-<body>
+<body class="app-empty">
 
 <button id="showEventsBtn" class="header-btn" title="查看 Steam 活动日历">📅</button>
+<nav class="quick-nav" aria-label="快速跳转">
+    <div class="quick-nav-title">导航</div>
+    <button type="button" data-scroll-target="bannerBuilder">横幅</button>
+    <button type="button" data-scroll-target="basicInfoSection">基础</button>
+    <button type="button" data-scroll-target="requirementsSection">配置</button>
+    <button type="button" data-scroll-target="videoInspector">视频</button>
+    <button type="button" data-scroll-target="imageInspector">图片</button>
+    <button type="button" data-scroll-target="urlsBox">链接</button>
+</nav>
 
 <div id="eventsViewer" class="side-panel hidden">
     <div class="panel-header">
@@ -335,7 +491,7 @@
 </div>
 
 
-<div class="main-container">
+<div class="main-container" id="bannerBuilder">
  <div class="header-container">
      <h1>枫小痕自己的steamdb</h1>
      <div class="header-controls">
@@ -345,14 +501,14 @@
      </div>
  </div>
 
- <div class="controls">
+ <div class="controls app-search-controls">
     <input type="text" id="appId" placeholder="输入 Steam App ID 或商店链接" autocomplete="off" />
     <button id="fetchBtn" style="margin-left: 12px;">获取</button>
     <button id="saveBtn" disabled style="margin-left: auto;">保存图片</button>
     <button id="goToStoreBtn" disabled>前往商店</button>
  </div>
 
- <div class="controls">
+ <div class="controls builder-only">
  <textarea id="customText" placeholder="输入自定义文字（支持多行）"></textarea>
  <input type="color" id="textColor" value="#ffffff" title="文字颜色" />
  <input type="number" id="textSize" value="24" min="8" max="200" title="文字大小" />
@@ -361,15 +517,15 @@
  <option value="微软雅黑">微软雅黑</option> <option value="黑体">黑体</option> <option value="Arial">Arial</option> <option value="Times New Roman">Times New Roman</option>
  </select>
  </div>
- <div id="canvas-container">
+ <div id="canvas-container" class="builder-only">
  <canvas id="heroCanvas" width="1200" height="278" title="拖动Logo或文字微调位置"></canvas>
  </div>
- <div class="slider-container">
+ <div class="slider-container builder-only">
  <label for="scaleSlider">缩放 Logo:</label>
  <input type="range" id="scaleSlider" min="10" max="200" value="100" disabled />
  <span id="scalePercent">100%</span>
  </div>
- <div class="controls slider-container" style="margin-top: 15px;">
+ <div class="controls slider-container builder-only" style="margin-top: 15px;">
  <label for="overlaySlider">背景渐变:</label>
  <input type="range" id="overlaySlider" min="0" max="100" value="40" />
  <span id="overlayPercent">40%</span>
@@ -381,13 +537,18 @@
  <div class="status-box"> <div id="loading"></div> <div id="error"></div> </div>
 </div>
 
-<div class="controls" style="justify-content: center; margin-top: 20px;">
+<div class="controls" id="toggleApiControls" style="justify-content: center; margin-top: 20px;">
     <button id="toggleApiBtn" style="display: none;">查看 API 数据</button>
 </div>
 
 <div id="apiViewerContainer" style="display: none;">
  <h3>API 数据浏览器</h3>
  <table id="api-table"></table>
+</div>
+
+<div id="videoInspector" style="display: none;">
+ <h3>宣传影像</h3>
+ <div id="videoList"></div>
 </div>
 
 <div id="imageInspector" style="display: none;">
@@ -456,6 +617,8 @@
  const overlayPercent = document.getElementById("overlayPercent");
  const imageInspector = document.getElementById("imageInspector");
  const imageList = document.getElementById("imageList");
+ const videoInspector = document.getElementById("videoInspector");
+ const videoList = document.getElementById("videoList");
  const urlsBox = document.getElementById("urlsBox");
  const gradientColorInput = document.getElementById("gradientColor");
  const gradientDirectionSelect = document.getElementById("gradientDirection");
@@ -503,6 +666,96 @@
     const value = path.split('.').reduce((acc, part) => acc && acc[part], obj);
     return value !== undefined && value !== null ? value : defaultValue;
  };
+ const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
+ const formatList = (items, formatter = item => escapeHtml(item)) => {
+    const list = Array.isArray(items) ? items : (items ? [items] : []);
+    return list.filter(Boolean).map(formatter).join(', ');
+ };
+ const createSearchLink = (name) => `<a href="https://store.steampowered.com/search/?term=${encodeURIComponent(name)}" target="_blank">${escapeHtml(name)}</a>`;
+ const createExternalLink = (url, label = url) => {
+    if (!url) return '';
+    return `<a href="${escapeHtml(url)}" target="_blank">${escapeHtml(label)}</a>`;
+ };
+ const getVideoFormats = (movie) => {
+    const formats = [];
+    if (movie?.mp4?.max) formats.push({ type: 'MP4', label: 'MP4 高清视频', quality: '高清', url: movie.mp4.max });
+    if (movie?.mp4?.['480']) formats.push({ type: 'MP4', label: 'MP4 480P 视频', quality: '480P', url: movie.mp4['480'] });
+    if (movie?.webm?.max) formats.push({ type: 'WebM', label: 'WebM 高清视频', quality: '高清', url: movie.webm.max });
+    if (movie?.webm?.['480']) formats.push({ type: 'WebM', label: 'WebM 480P 视频', quality: '480P', url: movie.webm['480'] });
+    if (movie?.hls_h264) formats.push({ type: 'HLS', label: 'HLS 自适应流', quality: 'H.264', url: movie.hls_h264 });
+    if (movie?.dash_h264) formats.push({ type: 'DASH_H264', label: 'MPEG-DASH H.264', quality: 'H.264', url: movie.dash_h264 });
+    if (movie?.dash_av1) formats.push({ type: 'DASH_AV1', label: 'MPEG-DASH AV1', quality: 'AV1', url: movie.dash_av1 });
+    const seen = new Set();
+    return formats.filter(format => {
+        if (seen.has(format.url)) return false;
+        seen.add(format.url);
+        return true;
+    });
+ };
+ const proxiedUrls = (url) => [
+    `https://corsproxy.io/?${encodeURIComponent(url)}`,
+    `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`
+ ];
+ async function fetchJsonWithFallback(url, options = {}) {
+    const urls = options.proxy ? proxiedUrls(url) : [url];
+    let lastError = null;
+    for (const requestUrl of urls) {
+        try {
+            const response = await fetch(requestUrl);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            return await response.json();
+        } catch (error) {
+            lastError = error;
+            console.warn(`请求失败，尝试下一个来源: ${requestUrl}`, error);
+        }
+    }
+    throw lastError || new Error('请求失败');
+ }
+ async function fetchTextWithFallback(url) {
+    const urls = [url, ...proxiedUrls(url)];
+    let lastError = null;
+    for (const requestUrl of urls) {
+        try {
+            const response = await fetch(requestUrl);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            return await response.text();
+        } catch (error) {
+            lastError = error;
+        }
+    }
+    throw lastError || new Error('请求失败');
+ }
+ function parseHighestResolution(manifestText) {
+    let best = null;
+    const patterns = [
+        /RESOLUTION=(\d+)x(\d+)/g,
+        /width="(\d+)"\s+height="(\d+)"/g
+    ];
+    patterns.forEach(pattern => {
+        let match;
+        while ((match = pattern.exec(manifestText))) {
+            const width = Number(match[1]);
+            const height = Number(match[2]);
+            if (!best || width * height > best.width * best.height) {
+                best = { width, height };
+            }
+        }
+    });
+    return best ? `${best.width}x${best.height}` : '';
+ }
+ function formatResolutionLabel(resolution) {
+    const match = String(resolution || '').match(/^(\d+)x(\d+)$/);
+    if (!match) return resolution || '';
+    const width = Number(match[1]);
+    const height = Number(match[2]);
+    if (width >= 3840 || height >= 2160) return `${resolution} 4K`;
+    if (width >= 2560 || height >= 1440) return `${resolution} 2K`;
+    return resolution;
+ }
+ function getFullMovieThumbnail(url) {
+    if (!url) return '';
+    return url.replace(/movie_\d+x\d+\.jpg(?=([?#]|$))/i, 'movie_full.jpg');
+ }
  // --- END HELPER FUNCTIONS ---
 
  function drawHero(img) { const cw = canvas.width, ch = canvas.height; ctx.clearRect(0, 0, cw, ch); if (!img.src) return; const scale = Math.max(cw / img.width, ch / img.height); const w = img.width * scale, h = img.height * scale; ctx.drawImage(img, (cw - w) / 2, (ch - h) / 2, w, h); if (overlayOpacity > 0) { let x0 = 0, y0 = 0, x1 = 0, y1 = 0; switch (gradientDirection) { case 'top-to-bottom': y1 = ch; break; case 'bottom-to-top': y0 = ch; break; case 'left-to-right': x1 = cw; break; case 'right-to-left': x0 = cw; break; case 'tl-to-br': x1 = cw; y1 = ch; break; case 'tr-to-bl': x0 = cw; y1 = ch; break; case 'bl-to-tr': y0 = ch; x1 = cw; break; case 'br-to-tl': x0 = cw; y0 = ch; break; } const g = ctx.createLinearGradient(x0, y0, x1, y1); g.addColorStop(0, hexToRgba(gradientColor, overlayOpacity)); g.addColorStop(1, hexToRgba(gradientColor, 0)); ctx.fillStyle = g; ctx.fillRect(0, 0, cw, ch); } }
@@ -566,6 +819,29 @@
  document.getElementById('showTagsBtn').addEventListener('click', () => tagsViewerPanel.classList.remove('hidden'));
  document.getElementById('hideEventsBtn').addEventListener('click', () => eventsViewerPanel.classList.add('hidden'));
  document.getElementById('showEventsBtn').addEventListener('click', () => eventsViewerPanel.classList.remove('hidden'));
+ document.querySelector('.quick-nav').addEventListener('click', (event) => {
+    const button = event.target.closest('button[data-scroll-target]');
+    if (!button) return;
+    const targetId = button.dataset.scrollTarget;
+    const apiTargets = new Set(['basicInfoSection', 'requirementsSection', 'playerDataSection', 'releaseInfoSection', 'languageSection']);
+    if (apiTargets.has(targetId) && apiViewerContainer.style.display === 'none') {
+        if (toggleApiBtn.style.display === 'none') {
+            showError('请先输入 App ID 并点击“获取”。');
+            return;
+        }
+        apiViewerContainer.style.display = 'block';
+        toggleApiBtn.textContent = '隐藏 API 数据';
+    }
+    const target = document.getElementById(targetId);
+    if (!target || target.offsetParent === null) {
+        showError('该条目当前还没有可跳转内容，请先获取游戏数据。');
+        return;
+    }
+    clearError();
+    document.querySelectorAll('.quick-nav button').forEach(navButton => navButton.classList.toggle('active', navButton === button));
+    const top = target.getBoundingClientRect().top + window.pageYOffset - 18;
+    window.scrollTo({ top, behavior: 'smooth' });
+ });
 
  function findImageCandidates(obj) { const results = new Set(); const imageRE = /\.(jpe?g|png|webp|gif)(\?|$)/i; function rec(v) { if (v == null) return; if (typeof v === 'string') { if (imageRE.test(v)) { results.add(v); } } else if (Array.isArray(v)) { for (const e of v) rec(e); } else if (typeof v === 'object') { for (const k in v) rec(v[k]); } } rec(obj); return [...results].map(s => s.split('#')[0].trim()).filter(Boolean); }
  
@@ -576,10 +852,10 @@
      return `${IMG_BASE}${encodeURIComponent(appid)}/${clean}`;
  }
 
- function showAssets(urls, videos) {
+ function showAssets(urls) {
      imageList.innerHTML = ''; 
-     if (urls.length === 0 && videos.length === 0) { 
-         imageList.innerHTML = '<p>没有识别到任何图片或视频资源。</p>'; 
+     if (urls.length === 0) { 
+         imageList.innerHTML = '<p>没有识别到任何图片资源。</p>'; 
          return; 
      } 
      imageList.innerHTML = `<p style="color: #60a5fa; text-align: center;">正在获取 ${urls.length} 张图片尺寸用于分组，请稍候...</p>`; 
@@ -595,8 +871,85 @@
              if (!imageCategories[res]) imageCategories[res] = []; 
              imageCategories[res].push(u); 
          }); 
-         renderCategories(imageCategories, videos); 
+         renderCategories(imageCategories); 
      }); 
+ }
+
+ function showVideos(videos) {
+    videoList.innerHTML = '';
+    if (!videos || videos.length === 0) {
+        videoInspector.style.display = 'none';
+        return;
+    }
+    videoInspector.style.display = 'block';
+    const grid = document.createElement('div');
+    grid.className = 'video-grid';
+    videos.forEach((video, index) => {
+        const formats = getVideoFormats(video);
+        const thumbnailUrl = getFullMovieThumbnail(video.thumbnail);
+        const primary = formats.find(format => format.type === 'HLS') || formats.find(format => format.type === 'DASH' && format.quality === 'H.264') || formats[0];
+        const sourceRows = formats.map(format => `
+            <div class="video-source-row" data-stream-url="${escapeHtml(format.url)}">
+                <span class="video-source-type">${escapeHtml(format.label)}</span>
+                <span class="video-source-quality">${escapeHtml(format.quality)}</span>
+                <span class="video-source-actions">
+                    <button data-url="${escapeHtml(format.url)}" class="open-btn">打开</button>
+                    <button data-url="${escapeHtml(format.url)}" class="copy-btn">复制</button>
+                </span>
+            </div>
+        `).join('');
+        const card = document.createElement('div');
+        card.className = 'video-card';
+        card.innerHTML = `
+            <div class="video-thumb-wrap">
+                <img src="${escapeHtml(thumbnailUrl)}" alt="${escapeHtml(video.name)}" class="video-thumb" loading="lazy">
+                <span class="video-hd-badge" data-video-quality="${index}">检测分辨率...</span>
+            </div>
+            <div class="video-card-body">
+                <h4 class="video-title" title="${escapeHtml(video.name)}">${escapeHtml(video.name)}</h4>
+                <div class="video-primary-actions">
+                    ${primary ? `<button data-url="${escapeHtml(primary.url)}" class="open-btn" style="background-color:#e11d48;">打开高清流</button>` : ''}
+                    <button data-url="${escapeHtml(thumbnailUrl)}" class="open-btn">打开封面</button>
+                    <button data-url="${escapeHtml(thumbnailUrl)}" class="copy-btn">复制封面</button>
+                    <button data-url="${escapeHtml(thumbnailUrl)}" class="dl-btn">下载封面</button>
+                </div>
+                <div class="video-source-list">
+                    ${sourceRows || '<div class="video-source-row"><span class="video-source-quality">无可用视频地址</span></div>'}
+                </div>
+            </div>
+        `;
+        grid.appendChild(card);
+    });
+    videoList.appendChild(grid);
+    updateVideoQualityLabels();
+ }
+
+ async function updateVideoQualityLabels() {
+    const rows = [...videoList.querySelectorAll('.video-source-row[data-stream-url]')];
+    const badgeResolutions = new Map();
+    await Promise.all(rows.map(async (row) => {
+        const url = row.dataset.streamUrl;
+        if (!/\.(m3u8|mpd)(\?|$)/i.test(url)) return;
+        try {
+            const text = await fetchTextWithFallback(url);
+            const resolution = parseHighestResolution(text);
+            if (!resolution) return;
+            const quality = row.querySelector('.video-source-quality');
+            quality.textContent = formatResolutionLabel(resolution);
+            const card = row.closest('.video-card');
+            const cardIndex = [...videoList.querySelectorAll('.video-card')].indexOf(card);
+            badgeResolutions.set(cardIndex, formatResolutionLabel(resolution));
+        } catch (error) {
+            console.warn('视频清单分辨率检测失败:', error);
+        }
+    }));
+    badgeResolutions.forEach((resolution, index) => {
+        const badge = videoList.querySelector(`[data-video-quality="${index}"]`);
+        if (badge) badge.textContent = resolution;
+    });
+    videoList.querySelectorAll('.video-hd-badge').forEach(badge => {
+        if (badge.textContent === '检测分辨率...') badge.textContent = '自适应';
+    });
  }
  
  function createCategoryElement(title, items, isVideo = false) {
@@ -622,14 +975,22 @@
             card.innerHTML = `<img src="${u}" alt="image" class="thumb" loading="lazy" onclick="this.style.objectFit = this.style.objectFit === 'contain' ? 'cover' : 'contain'"><div class="meta">${lang}</div><div class="actions"><button data-url="${u}" class="open-btn">打开</button><button data-url="${u}" class="copy-btn">复制</button><button data-url="${u}" class="crop-btn">裁剪</button><button data-url="${u}" class="dl-btn">下载</button></div>`;
         } else { // Video card
             const video = item;
+            const formats = getVideoFormats(video);
+            const formatButtons = formats.map(format => `
+                <div class="video-format-row">
+                    <span class="format-label">${format.type} ${format.quality}</span>
+                    <button data-url="${escapeHtml(format.url)}" class="open-btn" style="background-color:#e11d48;">播放</button>
+                    <button data-url="${escapeHtml(format.url)}" class="dl-btn" style="background-color:#e11d48;">下载</button>
+                </div>
+            `).join('');
             card.innerHTML = `
-                <img src="${video.thumbnail}" alt="${video.name}" class="thumb" loading="lazy">
-                <div class="meta" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${video.name}">${video.name}</div>
+                <img src="${escapeHtml(video.thumbnail)}" alt="${escapeHtml(video.name)}" class="thumb" loading="lazy">
+                <div class="meta" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${escapeHtml(video.name)}">${escapeHtml(video.name)}</div>
                 <div class="actions">
-                    <button data-url="${video.thumbnail}" class="open-btn">封面</button>
-                    <button data-url="${video.thumbnail}" class="dl-btn">下封面</button>
-                    <button data-url="${video.mp4.max}" class="open-btn" style="background-color:#e11d48;">播放</button>
-                    <button data-url="${video.mp4.max}" class="dl-btn" style="background-color:#e11d48;">下视频</button>
+                    <button data-url="${escapeHtml(video.thumbnail)}" class="open-btn">封面</button>
+                    <button data-url="${escapeHtml(video.thumbnail)}" class="copy-btn">复制封面</button>
+                    <button data-url="${escapeHtml(video.thumbnail)}" class="dl-btn">下封面</button>
+                    ${formatButtons || '<span class="format-label">无可用视频格式</span>'}
                 </div>`;
         }
         cardGrid.appendChild(card);
@@ -645,18 +1006,13 @@
     return wrapper;
  }
 
- function renderCategories(categories, videos) {
+ function renderCategories(categories) {
      imageList.innerHTML = '';
      
      if (categories['1920x1080']) {
          const screenshotElement = createCategoryElement('截图', categories['1920x1080']);
          imageList.appendChild(screenshotElement);
          delete categories['1920x1080'];
-     }
-     
-     if (videos && videos.length > 0) {
-        const videoElement = createCategoryElement('宣传影像', videos, true);
-        imageList.appendChild(videoElement);
      }
 
      const sortedKeys = Object.keys(categories).sort((a, b) => { 
@@ -673,7 +1029,27 @@
      }); 
  }
 
- imageList.addEventListener('click', e => { const target = e.target; const url = target.dataset.url; if (!url) return; if (target.classList.contains('open-btn')) { window.open(url, '_blank'); } else if (target.classList.contains('copy-btn')) { navigator.clipboard.writeText(url).then(() => { setLoading('链接已复制!'); setTimeout(clearLoading, 1500); }); } else if (target.classList.contains('dl-btn')) { downloadImage(url); } else if (target.classList.contains('crop-btn')) { cropImage.src = url; cropModal.style.display = 'flex'; cropImage.onload = () => { if(cropper) { cropper.destroy(); } cropper = new Cropper(cropImage, { viewMode: 1, background: false, autoCropArea: 0.9 }); }; } });
+ function handleAssetListClick(e) {
+    const target = e.target;
+    const url = target.dataset.url;
+    if (!url) return;
+    if (target.classList.contains('open-btn')) {
+        window.open(url, '_blank');
+    } else if (target.classList.contains('copy-btn')) {
+        navigator.clipboard.writeText(url).then(() => { setLoading('链接已复制!'); setTimeout(clearLoading, 1500); });
+    } else if (target.classList.contains('dl-btn')) {
+        downloadImage(url);
+    } else if (target.classList.contains('crop-btn')) {
+        cropImage.src = url;
+        cropModal.style.display = 'flex';
+        cropImage.onload = () => {
+            if(cropper) { cropper.destroy(); }
+            cropper = new Cropper(cropImage, { viewMode: 1, background: false, autoCropArea: 0.9 });
+        };
+    }
+ }
+ imageList.addEventListener('click', handleAssetListClick);
+ videoList.addEventListener('click', handleAssetListClick);
  document.getElementById('copyAllBtn').addEventListener('click', () => { if (!urlsBox.value) return; navigator.clipboard.writeText(urlsBox.value).then(() => { setLoading('全部链接已复制!'); setTimeout(clearLoading, 1500); }); });
  document.getElementById('exportTxtBtn').addEventListener('click', () => { if (!urlsBox.value) return; const blob = new Blob([urlsBox.value], {type:'text/plain;charset=utf-8'}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `steam_${appIdInput.value.trim()}_assets.txt`; a.click(); URL.revokeObjectURL(a.href); });
  document.getElementById('cropDownloadBtn').addEventListener('click', () => { if (!cropper) return; const cropWidth = parseInt(cropWidthInput.value, 10); const cropHeight = parseInt(cropHeightInput.value, 10); const options = {}; if (!isNaN(cropWidth) && cropWidth > 0) options.width = cropWidth; if (!isNaN(cropHeight) && cropHeight > 0) options.height = cropHeight; const canvas = cropper.getCroppedCanvas(options); const link = document.createElement('a'); link.download = `cropped_${appIdInput.value.trim()}_${Date.now()}.png`; link.href = canvas.toDataURL('image/png'); link.click(); document.getElementById('cropCancelBtn').click(); });
@@ -694,8 +1070,8 @@ function buildApiTable(appData, storeData, playerCount, reviewSummary) {
         html += `<tr><td>${label}</td><td>${value}</td></tr>`;
     };
 
-    const addSection = (title) => {
-        html += `<tr class="api-section-header"><td colspan="2">${title}</td></tr>`;
+    const addSection = (title, id = '') => {
+        html += `<tr class="api-section-header"${id ? ` id="${id}"` : ''}><td colspan="2">${title}</td></tr>`;
     };
     
     const formatChineseDate = (ts) => {
@@ -706,6 +1082,7 @@ function buildApiTable(appData, storeData, playerCount, reviewSummary) {
     
     const englishName = get(common, 'name', '基本信息');
     const chineseName = get(common, 'name_localized.schinese');
+    const resolvedAppId = get(data, 'steam_appid', get(data, 'appid', storeData?.steam_appid || appIdInput.value.trim()));
     let titleHtml = '';
     if (chineseName) {
         titleHtml += `<p class="api-game-title-zh">${chineseName}</p><p class="api-game-title">${englishName}</p>`;
@@ -714,23 +1091,25 @@ function buildApiTable(appData, storeData, playerCount, reviewSummary) {
     }
     html += `<tr class="api-title-header"><td colspan="2">${titleHtml}</td></tr>`;
     
-    addSection('基本信息');
-    addRow('APP ID', get(data, 'steam_appid'));
+    addSection('基础数据', 'basicInfoSection');
+    addRow('APP ID', resolvedAppId);
+    addRow('Steam 商店页', createExternalLink(`https://store.steampowered.com/app/${resolvedAppId}/`, `https://store.steampowered.com/app/${resolvedAppId}/`));
     const typeMap = { game: '游戏', dlc: 'DLC', application: '应用', music: '音乐', video: '视频', series: '剧集', hardware: '硬件' };
     const appType = get(common, 'type', '');
     addRow('APP 类型', typeMap[appType.toLowerCase()] || appType);
     
-    let developers = get(data, 'developers', []);
-    if (!Array.isArray(developers)) developers = [developers];
-    const devHtml = developers.map(d => `<a href="#">${d}</a>`).join(', ');
+    let developers = get(storeData, 'developers', get(data, 'developers', []));
+    const devHtml = formatList(developers, createSearchLink);
     addRow('开发商', devHtml);
 
-    let publishers = get(data, 'publishers', []);
-    if (!Array.isArray(publishers)) publishers = [publishers];
-    const pubHtml = publishers.map(p => `<a href="#">${p}</a>`).join(', ');
+    let publishers = get(storeData, 'publishers', get(data, 'publishers', []));
+    const pubHtml = formatList(publishers, createSearchLink);
     addRow('发行商', pubHtml);
 
     if (storeData) {
+        addRow('官方网站', createExternalLink(storeData.website));
+        addRow('年龄分级', get(storeData, 'required_age'));
+        addRow('控制器支持', get(storeData, 'controller_support'));
         if (storeData.is_free) { addRow('价格', '免费游玩'); }
         else if (storeData.price_overview) {
             const price = storeData.price_overview;
@@ -748,6 +1127,8 @@ function buildApiTable(appData, storeData, playerCount, reviewSummary) {
             if (storeData.platforms.linux) platformsHtml += `<span class="platform-icon" title="Linux / SteamOS">🐧</span>`;
             addRow('支持平台', platformsHtml);
         }
+        addRow('商店发布日期', get(storeData, 'release_date.date'));
+        addRow('即将推出', storeData.release_date?.coming_soon ? '是' : '否');
         
         if (storeData.metacritic) {
             addRow('Metacritic 评分', `<a href="${storeData.metacritic.url}" target="_blank">${storeData.metacritic.score}</a>`);
@@ -762,6 +1143,7 @@ function buildApiTable(appData, storeData, playerCount, reviewSummary) {
             addRow('小分类', categoriesHtml);
         }
     }
+    addRow('支持系统', get(common, 'oslist'));
     
     const storeTagsObject = get(common, 'store_tags', {});
     const playerTags = Object.values(storeTagsObject)
@@ -772,7 +1154,7 @@ function buildApiTable(appData, storeData, playerCount, reviewSummary) {
         addRow('玩家标签', tagsHtml);
     }
     
-    addSection('玩家数据');
+    addSection('玩家数据', 'playerDataSection');
     if (playerCount !== null && playerCount >= 0) { addRow('当前在线人数', playerCount.toLocaleString()); }
     
     if (reviewSummary && reviewSummary.total_reviews > 0) {
@@ -784,21 +1166,21 @@ function buildApiTable(appData, storeData, playerCount, reviewSummary) {
         }
     }
     
-    addSection('发布信息');
+    addSection('发布信息', 'releaseInfoSection');
     addRow('商店页发行日期', formatChineseDate(get(common, 'steam_release_date')));
     addRow('发布状态', get(common, 'releasestate'));
     addRow('最后更新时间', formatChineseDate(get(common, 'last_record_update')));
     addRow('Last Changenumber', get(common, 'last_changenumber'));
     
     if (storeData) {
-        addSection('PC 配置要求');
+        addSection('PC 配置要求', 'requirementsSection');
         addRow('最低配置', get(storeData, 'pc_requirements.minimum', '无'));
         addRow('推荐配置', get(storeData, 'pc_requirements.recommended', '无'));
     }
     
     const localized = get(common, 'name_localized');
     if (localized && Object.keys(localized).length > 1) {
-        addSection('本地化名称');
+        addSection('本地化名称', 'localizationSection');
         const langMap = {'english':'英语','japanese':'日语','schinese':'简体中文','tchinese':'繁体中文','french':'法语','german':'德语','italian':'意大利语','koreana':'韩语','spanish':'西班牙语','russian':'俄语','thai':'泰语','portuguese':'葡萄牙语','polish':'波兰语','danish':'丹麦语','dutch':'荷兰语','finnish':'芬兰语','norwegian':'挪威语','swedish':'瑞典语','hungarian':'匈牙利语','czech':'捷克语','romanian':'罗马尼亚语','turkish':'土耳其语','arabic':'阿拉伯语','bulgarian':'保加利亚语','greek':'希腊语','ukrainian':'乌克兰语','vietnamese':'越南语','brazilian':'巴西葡萄牙语','latam':'拉丁美洲西班牙语'};
         Object.entries(localized).forEach(([lang, name]) => {
             if(lang !== 'schinese') addRow(langMap[lang] || lang, name)
@@ -807,7 +1189,7 @@ function buildApiTable(appData, storeData, playerCount, reviewSummary) {
     
     const langValue = get(data, 'supported_languages');
     if (langValue) {
-        addSection("支持的语言");
+        addSection("支持的语言", 'languageSection');
         const langMap = {'english': '英语', 'japanese': '日语', 'french': '法语', 'italian': '意大利语', 'german': '德语', 'spanish': '西班牙语 - 西班牙', 'brazilian': '葡萄牙语 - 巴西', 'russian': '俄语', 'schinese': '简体中文', 'tchinese': '繁体中文', 'koreana': '韩语'};
         let langTable = '<table class="language-table"><thead><tr><th>语言</th><th>界面</th><th>音频</th><th>字幕</th></tr></thead><tbody>';
         Object.entries(langValue).forEach(([lang, support]) => {
@@ -820,9 +1202,13 @@ function buildApiTable(appData, storeData, playerCount, reviewSummary) {
     }
 
     if (storeData && storeData.movies && storeData.movies.length > 0) {
-        addSection('宣传影像');
+        addSection('宣传影像', 'videoSection');
         storeData.movies.forEach(movie => {
-            if (movie.mp4 && movie.mp4.max) { addRow(movie.name, `<a href="${movie.mp4.max}" target="_blank">${movie.mp4.max}</a>`); }
+            const formatLinks = getVideoFormats(movie).map(format => {
+                const label = `${format.label} ${format.quality}`;
+                return `<a href="${escapeHtml(format.url)}" target="_blank">${label}: ${escapeHtml(format.url)}</a>`;
+            }).join('');
+            if (formatLinks) { addRow(movie.name, `<div class="api-link-list">${formatLinks}</div>`); }
         });
     }
 
@@ -837,48 +1223,72 @@ function buildApiTable(appData, storeData, playerCount, reviewSummary) {
     }
 
     clearError(); setLoading("正在请求API...");
+    document.body.classList.add('app-empty');
     saveBtn.disabled = true; goToStoreBtn.disabled = true; scaleSlider.disabled = true; 
     toggleApiBtn.style.display = 'none'; apiViewerContainer.style.display = 'none';
+    videoInspector.style.display = 'none'; videoList.innerHTML = '';
     imageInspector.style.display = 'none'; imageList.innerHTML = ''; urlsBox.value = '';
     screenshotUrls = []; videoData = [];
 
     try {
-        const proxyUrl = 'https://corsproxy.io/?';
         const storeApiUrl = `${STORE_API_BASE}${appId}&l=schinese&cc=cn`;
         const playerApiUrl = `https://api.steampowered.com/ISteamUserStats/GetNumberOfCurrentPlayers/v1/?appid=${appId}`;
         const reviewsApiUrl = `https://store.steampowered.com/appreviews/${appId}?json=1&language=all`;
         
-        const [steamCmdRes, storeRes, playerRes, reviewsRes] = await Promise.all([
-            fetch(API_BASE + appId),
-            fetch(proxyUrl + encodeURIComponent(storeApiUrl)),
-            fetch(proxyUrl + encodeURIComponent(playerApiUrl)),
-            fetch(proxyUrl + encodeURIComponent(reviewsApiUrl))
+        const [steamCmdResult, storeResult, playerResult, reviewsResult] = await Promise.allSettled([
+            fetchJsonWithFallback(API_BASE + appId),
+            fetchJsonWithFallback(storeApiUrl, { proxy: true }),
+            fetchJsonWithFallback(playerApiUrl, { proxy: true }),
+            fetchJsonWithFallback(reviewsApiUrl, { proxy: true })
         ]);
 
-        if (!steamCmdRes.ok) throw new Error(`SteamCMD API 请求失败: ${steamCmdRes.status}`);
-        
-        const steamCmdJson = await steamCmdRes.json();
-        const appData = steamCmdJson.data?.[appId];
-        if (!appData) { throw new Error(steamCmdJson.message || "未找到游戏数据或API返回格式无效"); }
+        let steamCmdJson = {};
+        let appData = null;
+        if (steamCmdResult.status === 'fulfilled') {
+            steamCmdJson = steamCmdResult.value;
+            appData = steamCmdJson.data?.[appId] || null;
+        } else {
+            console.warn('SteamCMD API 请求失败:', steamCmdResult.reason);
+        }
         
         let storeData = null;
-        if (storeRes.ok) {
-            const storeJson = await storeRes.json();
-            if (storeJson[appId]?.success) { storeData = storeJson[appId].data; }
-        } else { console.warn(`商店 API 请求失败: ${storeRes.status}`); }
+        if (storeResult.status === 'fulfilled' && storeResult.value[appId]?.success) {
+            storeData = storeResult.value[appId].data;
+        } else if (storeResult.status === 'rejected') {
+            console.warn('商店 API 请求失败:', storeResult.reason);
+        }
+
+        if (!appData && storeData) {
+            appData = {
+                data: {
+                    steam_appid: storeData.steam_appid,
+                    developers: storeData.developers || [],
+                    publishers: storeData.publishers || []
+                },
+                common: {
+                    name: storeData.name,
+                    type: storeData.type || '',
+                    releasestate: storeData.release_date?.coming_soon ? 'prerelease' : 'released'
+                }
+            };
+        }
+        if (!appData && !storeData) { throw new Error("未找到游戏数据或API返回格式无效"); }
         
         let playerCount = null;
-        if (playerRes.ok) {
-            const playerJson = await playerRes.json();
-            if (playerJson.response?.result === 1) { playerCount = playerJson.response.player_count; }
-        } else { console.warn(`玩家数量 API 请求失败: ${playerRes.status}`); }
+        if (playerResult.status === 'fulfilled' && playerResult.value.response?.result === 1) {
+            playerCount = playerResult.value.response.player_count;
+        } else if (playerResult.status === 'rejected') {
+            console.warn('玩家数量 API 请求失败:', playerResult.reason);
+        }
 
         let reviewSummary = null;
-        if (reviewsRes.ok) {
-            const reviewsJson = await reviewsRes.json();
-            if (reviewsJson.success === 1) { reviewSummary = reviewsJson.query_summary; }
-        } else { console.warn(`评测 API 请求失败: ${reviewsRes.status}`); }
+        if (reviewsResult.status === 'fulfilled' && reviewsResult.value.success === 1) {
+            reviewSummary = reviewsResult.value.query_summary;
+        } else if (reviewsResult.status === 'rejected') {
+            console.warn('评测 API 请求失败:', reviewsResult.reason);
+        }
         
+        document.body.classList.remove('app-empty');
         buildApiTable(appData, storeData, playerCount, reviewSummary);
         toggleApiBtn.style.display = 'block';
         
@@ -888,42 +1298,48 @@ function buildApiTable(appData, storeData, playerCount, reviewSummary) {
         document.getElementById("customText").value = customText;
         
         const assetsFull = appData.common?.library_assets_full;
-        if (!assetsFull) throw new Error("缺少 library_assets_full 数据");
-        const heroPath = assetsFull.library_hero?.image?.english;
-        let logoPath = assetsFull.library_logo?.image?.schinese || assetsFull.library_logo?.image?.english;
-        if (!heroPath) throw new Error("未找到 library_hero 图片");
-        
-        const heroUrl = IMG_BASE + appId + "/" + heroPath;
+        const heroPath = assetsFull?.library_hero?.image?.english;
+        let logoPath = assetsFull?.library_logo?.image?.schinese || assetsFull?.library_logo?.image?.english;
+        const heroUrl = heroPath ? IMG_BASE + appId + "/" + heroPath : (storeData?.header_image || '');
         let logoUrl = logoPath ? IMG_BASE + appId + "/" + logoPath : `https://cdn.cloudflare.steamstatic.com/steam/apps/${appId}/header.jpg`;
         
-        heroImg = new Image(); heroImg.crossOrigin = "anonymous"; heroImg.src = heroUrl;
-        logoImg = new Image(); logoImg.crossOrigin = "anonymous"; logoImg.src = logoUrl;
-        
-        await Promise.all([
-            new Promise((res, rej) => { heroImg.onload = res; heroImg.onerror = () => rej(new Error('背景图加载失败')); }),
-            new Promise((res) => { logoImg.onload = res; logoImg.onerror = () => { logoImg.src = `https://cdn.cloudflare.steamstatic.com/steam/apps/${appId}/header.jpg`; logoImg.onload = res; logoImg.onerror = res; }; }),
-        ]);
-        
-        drawHero(heroImg);
-        if(logoImg.complete && logoImg.naturalWidth > 0) {
-           logoScale = (0.2 * canvas.width) / logoImg.width;
-           logoX = (canvas.width - (logoImg.width * logoScale)) / 2;
-           logoY = (canvas.height - (logoImg.height * logoScale)) / 2;
-           scaleSlider.value = Math.round(logoScale * 100);
-           scalePercent.textContent = `${Math.round(logoScale * 100)}%`;
-           scaleSlider.disabled = false;
-        } else { logoImg.src = ''; scaleSlider.disabled = true; }
+        if (heroUrl) {
+            try {
+                heroImg = new Image(); heroImg.crossOrigin = "anonymous"; heroImg.src = heroUrl;
+                logoImg = new Image(); logoImg.crossOrigin = "anonymous"; logoImg.src = logoUrl;
+                
+                await Promise.all([
+                    new Promise((res, rej) => { heroImg.onload = res; heroImg.onerror = () => rej(new Error('背景图加载失败')); }),
+                    new Promise((res) => { logoImg.onload = res; logoImg.onerror = () => { logoImg.src = `https://cdn.cloudflare.steamstatic.com/steam/apps/${appId}/header.jpg`; logoImg.onload = res; logoImg.onerror = res; }; }),
+                ]);
+                
+                drawHero(heroImg);
+                if(logoImg.complete && logoImg.naturalWidth > 0) {
+                   logoScale = (0.2 * canvas.width) / logoImg.width;
+                   logoX = (canvas.width - (logoImg.width * logoScale)) / 2;
+                   logoY = (canvas.height - (logoImg.height * logoScale)) / 2;
+                   scaleSlider.value = Math.round(logoScale * 100);
+                   scalePercent.textContent = `${Math.round(logoScale * 100)}%`;
+                   scaleSlider.disabled = false;
+                } else { logoImg.src = ''; scaleSlider.disabled = true; }
 
-        saveBtn.disabled = false;
+                saveBtn.disabled = false;
+
+                ctx.font = `${textSize}px "${textFont}"`;
+                const lines = customText.split("\n");
+                const textW = Math.max(...lines.map(line => ctx.measureText(line).width));
+                const textH = lines.length * (textSize + lineSpacing) - lineSpacing;
+                textX = (canvas.width - textW) / 2;
+                textY = (canvas.height - textH) / 2 + 30;
+                drawAll();
+            } catch (assetError) {
+                console.warn('横幅素材加载失败，继续解析图片和视频:', assetError);
+                showError(`横幅素材加载失败，但将继续解析图片和视频。`);
+            }
+        } else {
+            console.warn('缺少横幅素材，继续解析图片和视频。');
+        }
         goToStoreBtn.disabled = false;
-
-        ctx.font = `${textSize}px "${textFont}"`;
-        const lines = customText.split("\n");
-        const textW = Math.max(...lines.map(line => ctx.measureText(line).width));
-        const textH = lines.length * (textSize + lineSpacing) - lineSpacing;
-        textX = (canvas.width - textW) / 2;
-        textY = (canvas.height - textH) / 2 + 30;
-        drawAll();
 
         setLoading("正在解析图片与视频资源...");
         let candidates = findImageCandidates(steamCmdJson);
@@ -938,22 +1354,25 @@ function buildApiTable(appData, storeData, playerCount, reviewSummary) {
         }
         
         if (storeData?.movies) {
-            videoData = storeData.movies.filter(m => m.mp4 && m.mp4.max);
+            videoData = storeData.movies.filter(m => getVideoFormats(m).length > 0);
             videoData.forEach(v => {
-                allAssetUrlsForTxt.push(v.thumbnail);
-                allAssetUrlsForTxt.push(v.mp4.max);
+                allAssetUrlsForTxt.push(getFullMovieThumbnail(v.thumbnail));
+                getVideoFormats(v).forEach(format => allAssetUrlsForTxt.push(format.url));
             });
         }
+
+        showVideos(videoData);
 
         imageInspector.style.display = 'block';
         if (allImageUrls.length > 0 || videoData.length > 0) {
             urlsBox.value = [...new Set(allAssetUrlsForTxt)].join('\n');
-            showAssets(allImageUrls, videoData);
+            showAssets(allImageUrls);
         } else {
-            imageList.innerHTML = '<p>未能自动识别到任何图片或视频资源。</p>';
+            imageList.innerHTML = '<p>未能自动识别到任何图片资源。</p>';
         }
         clearLoading();
     } catch (e) {
+        document.body.classList.add('app-empty');
         showError(e.message || "未知错误");
         clearLoading();
     }
