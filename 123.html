@@ -1691,17 +1691,6 @@ function buildApiTable(appData, storeData, regionalReviews = [], regionalPrices 
         html += `<tr><td></td><td>${langTable}</td></tr>`;
     }
 
-    if (storeData && storeData.movies && storeData.movies.length > 0) {
-        addSection('宣传影像', 'videoSection');
-        storeData.movies.forEach(movie => {
-            const formatLinks = getVideoFormats(movie).map(format => {
-                const label = `${format.label} ${format.quality}`;
-                return `<a href="${escapeHtml(format.url)}" target="_blank">${label}: ${escapeHtml(format.url)}</a>`;
-            }).join('');
-            if (formatLinks) { addRow(movie.name, `<div class="api-link-list">${formatLinks}</div>`); }
-        });
-    }
-
     apiTable.innerHTML = html;
 }
  
