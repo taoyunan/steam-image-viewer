@@ -13,7 +13,7 @@
  background: #121417; color: #e0e0e0; font-family: 'Roboto Slab', "微软雅黑", sans-serif;
  display: flex; flex-direction: column; align-items: center;
  padding: 25px 15px 40px 268px; min-height: 100vh;
- scroll-behavior: smooth;
+ scroll-behavior: smooth; overflow-x: hidden;
  }
  body.app-empty {
  padding-left: 15px; justify-content: center;
@@ -95,6 +95,8 @@
  button {
  background: #3b82f6; color: white; cursor: pointer; padding: 10px 22px;
  font-weight: 700; box-shadow: 0 4px 15px #3b82f6bb; flex: none;
+ display: inline-flex; align-items: center; justify-content: center;
+ gap: 6px; line-height: 1.2; text-align: center;
  }
  button:disabled { background: #606c8f; cursor: not-allowed; box-shadow: none; }
  button:hover:not(:disabled) { background: #2563eb; box-shadow: 0 6px 20px #2563ebcc; }
@@ -172,6 +174,28 @@
  background: rgba(15,23,42,0.55); border: 1px solid #334155;
  border-radius: 6px; padding: 4px 7px;
  }
+ .game-preview-facts {
+ display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+ gap: 8px;
+ }
+ .game-preview-fact {
+ min-width: 0; background: rgba(15,23,42,0.48); border: 1px solid #334155;
+ border-radius: 8px; padding: 7px 8px;
+ }
+ .game-preview-fact-label {
+ display: block; color: #94a3b8; font-size: 12px; line-height: 1.2;
+ margin-bottom: 3px;
+ }
+ .game-preview-fact-value {
+ display: block; color: #e5eefc; font-size: 13px; line-height: 1.35;
+ overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+ }
+ .game-preview-actions {
+ display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+ }
+ .preview-price-note {
+ color: #93c5fd; font-size: 13px; line-height: 1.35;
+ }
  .game-preview-desc {
  color: #cbd5e1; line-height: 1.55; margin: 0;
  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
@@ -234,7 +258,8 @@
     width: 100%; min-height: 42px; padding: 9px 12px 9px 24px;
     font-size: 14px; line-height: 1.2; background: transparent;
     color: #cbd5e1; border: 1px solid transparent; box-shadow: none;
-    border-radius: 8px; position: relative;
+    border-radius: 8px; position: relative; justify-content: flex-start;
+    text-align: left;
  }
  .quick-nav button::before {
     content: ""; position: absolute; left: 7px; top: 50%;
@@ -450,6 +475,13 @@
  .review-rate-good { color: #86efac; font-weight: 700; }
  .review-rate-mid { color: #fde68a; font-weight: 700; }
  .review-rate-low { color: #fca5a5; font-weight: 700; }
+ .price-table { width: 100%; border: 1px solid #2e3a59; border-radius: 6px; border-collapse: separate; border-spacing: 0; overflow: hidden; }
+ .price-table th, .price-table td { text-align: left; padding: 7px 9px; border-bottom: 1px solid #2e3a59; }
+ .price-table tr:last-child td { border-bottom: none; }
+ .price-table th { color: #aeb9c7; background: #23262a; }
+ .price-current { color: #e5eefc; font-weight: 700; }
+ .price-discount { color: #a1e196; font-weight: 700; }
+ .price-muted { color: #94a3b8; }
  .language-table { width: 100%; margin-top: 5px; border: 1px solid #2e3a59; border-radius: 6px; border-collapse: separate; border-spacing: 0; }
  .language-table th, .language-table td { text-align: left; padding: 6px 8px; border-bottom: 1px solid #2e3a59; }
  .language-table tr:last-child td { border-bottom: none; }
@@ -819,7 +851,45 @@
     if (/920x430|616x353|374x448|600x900/.test(lower)) return '封面素材';
     return '其他素材';
  }
- function renderGamePreview(appData, storeData) {
+ function formatMainPrice(storeData) {
+    if (!storeData) return '';
+    if (storeData.is_free) return '免费游玩';
+    const price = storeData.price_overview;
+    if (!price) return '';
+    const discount = Number(price.discount_percent || 0);
+    return discount > 0
+        ? `${price.final_formatted}（-${discount}% / 原价 ${price.initial_formatted || '-'}）`
+        : price.final_formatted;
+ }
+ function getPlatformLabels(platforms) {
+    if (!platforms) return '';
+    const labels = [];
+    if (platforms.windows) labels.push('Windows');
+    if (platforms.mac) labels.push('macOS');
+    if (platforms.linux) labels.push('Linux / SteamOS');
+    return labels.join(' / ');
+ }
+ function getAppTypeLabel(type) {
+    const typeMap = { game: '游戏', dlc: 'DLC', application: '应用', music: '音乐', video: '视频', series: '剧集', hardware: '硬件' };
+    return typeMap[String(type || '').toLowerCase()] || type || '';
+ }
+ function summarizeRegionalPrices(regionalPrices = []) {
+    const rows = regionalPrices.filter(item => item.price);
+    if (rows.length === 0) return '';
+    const china = rows.find(item => item.cc === 'cn');
+    const first = china || rows[0];
+    return `${rows.length} 个地区，${first.label} ${first.price.final_formatted}`;
+ }
+ function renderPreviewFact(label, value) {
+    if (!value) return '';
+    return `
+        <div class="game-preview-fact">
+            <span class="game-preview-fact-label">${escapeHtml(label)}</span>
+            <span class="game-preview-fact-value" title="${escapeHtml(value)}">${escapeHtml(value)}</span>
+        </div>
+    `;
+ }
+ function renderGamePreview(appData, storeData, regionalPrices = []) {
     const data = appData.data || {};
     const common = appData.common || {};
     const appId = get(data, 'steam_appid', get(data, 'appid', storeData?.steam_appid || appIdInput.value.trim()));
@@ -828,24 +898,44 @@
     const developers = formatList(storeData?.developers || data.developers || []);
     const publishers = formatList(storeData?.publishers || data.publishers || []);
     const releaseDate = storeData?.release_date?.date || '未知日期';
-    const price = storeData?.is_free ? '免费游玩' : (storeData?.price_overview?.final_formatted || '');
+    const price = formatMainPrice(storeData);
     const desc = stripHtml(storeData?.short_description || storeData?.about_the_game || '');
     const genres = (storeData?.genres || []).slice(0, 6).map(g => g.description);
+    const categories = (storeData?.categories || []).slice(0, 6).map(c => c.description);
+    const platforms = getPlatformLabels(storeData?.platforms);
+    const appType = getAppTypeLabel(storeData?.type || common.type);
+    const age = Number(storeData?.required_age || 0) > 0 ? `${storeData.required_age}+` : '';
+    const controller = storeData?.controller_support ? storeData.controller_support : '';
+    const regionalPriceNote = summarizeRegionalPrices(regionalPrices);
     const meta = [
         developers && `开发商：${developers}`,
         publishers && `发行商：${publishers}`,
         releaseDate && `日期：${releaseDate}`,
         price && `价格：${price}`
     ].filter(Boolean).map(item => `<span>${item}</span>`).join('');
+    const facts = [
+        ['APP ID', String(appId)],
+        ['类型', appType],
+        ['支持平台', platforms],
+        ['控制器', controller],
+        ['年龄分级', age],
+        ['Metacritic', storeData?.metacritic?.score ? String(storeData.metacritic.score) : ''],
+        ['地区价格', regionalPriceNote]
+    ].map(([label, value]) => renderPreviewFact(label, value)).join('');
     gamePreview.innerHTML = `
         <div class="game-preview-inner">
             <img src="${escapeHtml(header)}" alt="${escapeHtml(title)}">
             <div class="game-preview-body">
                 <h2 class="game-preview-title">${escapeHtml(title)}</h2>
                 <div class="game-preview-meta">${meta}</div>
+                ${facts ? `<div class="game-preview-facts">${facts}</div>` : ''}
                 ${desc ? `<p class="game-preview-desc">${escapeHtml(desc)}</p>` : ''}
-                <div class="game-preview-tags">${genres.map(tag => `<span class="api-tag">${escapeHtml(tag)}</span>`).join('')}</div>
-                <a class="preview-link" href="https://store.steampowered.com/app/${escapeHtml(appId)}/" target="_blank">打开 Steam 商店</a>
+                <div class="game-preview-tags">${[...genres, ...categories].map(tag => `<span class="api-tag">${escapeHtml(tag)}</span>`).join('')}</div>
+                <div class="game-preview-actions">
+                    <a class="preview-link" href="https://store.steampowered.com/app/${escapeHtml(appId)}/" target="_blank">打开 Steam 商店</a>
+                    ${storeData?.website ? `<a class="preview-link" href="${escapeHtml(storeData.website)}" target="_blank">官网</a>` : ''}
+                    ${regionalPriceNote ? `<span class="preview-price-note">${escapeHtml(regionalPriceNote)}</span>` : ''}
+                </div>
             </div>
         </div>
     `;
@@ -874,6 +964,54 @@
     { code: 'spanish', label: '西班牙语' },
     { code: 'brazilian', label: '巴西葡萄牙语' }
  ];
+ const PRICE_REGIONS = [
+    { cc: 'cn', label: '中国大陆' },
+    { cc: 'us', label: '美国' },
+    { cc: 'hk', label: '中国香港' },
+    { cc: 'tw', label: '中国台湾' },
+    { cc: 'jp', label: '日本' },
+    { cc: 'kr', label: '韩国' },
+    { cc: 'sg', label: '新加坡' },
+    { cc: 'th', label: '泰国' },
+    { cc: 'vn', label: '越南' },
+    { cc: 'my', label: '马来西亚' },
+    { cc: 'id', label: '印度尼西亚' },
+    { cc: 'ph', label: '菲律宾' },
+    { cc: 'in', label: '印度' },
+    { cc: 'tr', label: '土耳其' },
+    { cc: 'ar', label: '阿根廷' },
+    { cc: 'br', label: '巴西' },
+    { cc: 'mx', label: '墨西哥' },
+    { cc: 'ca', label: '加拿大' },
+    { cc: 'gb', label: '英国' },
+    { cc: 'de', label: '德国' },
+    { cc: 'fr', label: '法国' },
+    { cc: 'pl', label: '波兰' },
+    { cc: 'ua', label: '乌克兰' },
+    { cc: 'kz', label: '哈萨克斯坦' },
+    { cc: 'ru', label: '俄罗斯' },
+    { cc: 'au', label: '澳大利亚' },
+    { cc: 'nz', label: '新西兰' },
+    { cc: 'sa', label: '沙特阿拉伯' },
+    { cc: 'ae', label: '阿联酋' },
+    { cc: 'za', label: '南非' }
+ ];
+ async function runLimited(items, limit, worker) {
+    const results = new Array(items.length);
+    let nextIndex = 0;
+    const workers = Array.from({ length: Math.min(limit, items.length) }, async () => {
+        while (nextIndex < items.length) {
+            const index = nextIndex++;
+            try {
+                results[index] = { status: 'fulfilled', value: await worker(items[index], index) };
+            } catch (error) {
+                results[index] = { status: 'rejected', reason: error };
+            }
+        }
+    });
+    await Promise.all(workers);
+    return results;
+ }
  function formatReviewRate(item) {
     if (!item || item.total <= 0) return '无数据';
     const rate = (item.positive / item.total) * 100;
@@ -903,6 +1041,34 @@
         return { ...REVIEW_LOCALES[index], total: 0, positive: 0, negative: 0, desc: '获取失败', error: result.reason?.message || '请求失败' };
     });
  }
+ function formatRegionalPrice(item) {
+    if (item?.isFree) return '<span class="price-current">免费游玩</span>';
+    if (!item?.price) return '<span class="price-muted">无价格数据</span>';
+    const price = item.price;
+    let html = `<span class="price-current">${escapeHtml(price.final_formatted || '-')}</span>`;
+    if (Number(price.discount_percent || 0) > 0) {
+        html += ` <span class="price-discount">-${price.discount_percent}%</span>`;
+        if (price.initial_formatted) html += ` <span class="price-muted">原价 ${escapeHtml(price.initial_formatted)}</span>`;
+    }
+    return html;
+ }
+ async function fetchRegionalPrices(appId) {
+    const results = await runLimited(PRICE_REGIONS, 10, async region => {
+        const url = `${STORE_API_BASE}${appId}&filters=price_overview&cc=${region.cc}&l=schinese`;
+        const json = await fetchJsonWithFallback(url, { directFirst: true, proxy: 'corsproxy', timeoutMs: 5000, allowErrorJson: true });
+        const data = json?.[appId]?.data || {};
+        return {
+            cc: region.cc,
+            label: region.label,
+            price: data.price_overview || null,
+            source: json.__sourceLabel || '未知来源'
+        };
+    });
+    return results.map((result, index) => {
+        if (result.status === 'fulfilled') return result.value;
+        return { ...PRICE_REGIONS[index], price: null, error: result.reason?.message || '请求失败' };
+    });
+ }
  const getVideoFormats = (movie) => {
     const formats = [];
     if (movie?.mp4?.max) formats.push({ type: 'MP4', label: 'MP4 高清视频', quality: '高清', url: movie.mp4.max });
@@ -923,7 +1089,9 @@
     const encoded = encodeURIComponent(url);
     const attempts = [];
     if (options.directFirst) attempts.push({ label: '直连', url });
-    if (options.proxy) {
+    if (options.proxy === 'corsproxy') {
+        attempts.push({ label: 'CORSProxy', url: `https://corsproxy.io/?${encoded}` });
+    } else if (options.proxy) {
         attempts.push(
             { label: 'AllOrigins', url: `https://api.allorigins.win/raw?url=${encoded}` },
             { label: 'CodeTabs', url: `https://api.codetabs.com/v1/proxy?quest=${encoded}` },
@@ -1353,7 +1521,7 @@
  cropWidthInput.addEventListener('input', updateCropAspectRatio);
  cropHeightInput.addEventListener('input', updateCropAspectRatio);
 
-function buildApiTable(appData, storeData, regionalReviews = []) {
+function buildApiTable(appData, storeData, regionalReviews = [], regionalPrices = []) {
     const data = appData.data || {};
     const common = appData.common || {};
     let html = '';
@@ -1411,6 +1579,25 @@ function buildApiTable(appData, storeData, regionalReviews = []) {
                 priceHtml += ` <span style="color:#a1e196;">(-${price.discount_percent}%)</span> (原价: ${price.initial_formatted})`;
             }
             addRow('价格', priceHtml);
+        }
+        const priceRows = regionalPrices.filter(item => item.price || item.isFree);
+        if (priceRows.length > 0) {
+            const priceTable = `
+                <table class="price-table">
+                    <thead><tr><th>地区</th><th>CC</th><th>价格</th><th>币种</th></tr></thead>
+                    <tbody>
+                        ${priceRows.map(item => `
+                            <tr>
+                                <td>${escapeHtml(item.label)}</td>
+                                <td>${escapeHtml(item.cc.toUpperCase())}</td>
+                                <td>${formatRegionalPrice(item)}</td>
+                                <td>${escapeHtml(item.price?.currency || (item.isFree ? '-' : ''))}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+            addRow('地区价格', priceTable);
         }
         
         if (storeData.platforms) {
@@ -1538,10 +1725,11 @@ function buildApiTable(appData, storeData, regionalReviews = []) {
     try {
         const storeApiUrl = `${STORE_API_BASE}${appId}&l=schinese&cc=cn`;
         
-        const [steamCmdResult, storeResult, regionalReviewsResult] = await Promise.allSettled([
+        const [steamCmdResult, storeResult, regionalReviewsResult, regionalPricesResult] = await Promise.allSettled([
             fetchJsonWithFallback(API_BASE + appId, { directFirst: true, timeoutMs: 10000 }),
             fetchJsonWithFallback(storeApiUrl, { directFirst: true, proxy: true, timeoutMs: 10000 }),
-            fetchRegionalReviews(appId)
+            fetchRegionalReviews(appId),
+            fetchRegionalPrices(appId)
         ]);
 
         let steamCmdJson = {};
@@ -1591,11 +1779,23 @@ function buildApiTable(appData, storeData, regionalReviews = []) {
         } else {
             statusItems.push({ label: '好评度失败', state: 'fail', detail: regionalReviewsResult.reason?.message || '请求失败' });
         }
+
+        let regionalPrices = [];
+        if (regionalPricesResult.status === 'fulfilled') {
+            regionalPrices = regionalPricesResult.value;
+            if (storeData?.is_free) {
+                regionalPrices = regionalPrices.map(item => ({ ...item, isFree: true }));
+            }
+            const regionsWithPrice = regionalPrices.filter(item => item.price || item.isFree).length;
+            statusItems.push({ label: regionsWithPrice > 0 ? `地区价格 ${regionsWithPrice}` : '地区价格无数据', state: regionsWithPrice > 0 ? 'ok' : 'warn', detail: regionsWithPrice > 0 ? '已获取多地区本地币种价格' : 'Steam 未返回 price_overview，可能是未定价或下架' });
+        } else {
+            statusItems.push({ label: '地区价格失败', state: 'fail', detail: regionalPricesResult.reason?.message || '请求失败' });
+        }
         
         document.body.classList.remove('app-empty');
-        buildApiTable(appData, storeData, regionalReviews);
+        buildApiTable(appData, storeData, regionalReviews, regionalPrices);
         toggleApiBtn.style.display = 'block';
-        renderGamePreview(appData, storeData);
+        renderGamePreview(appData, storeData, regionalPrices);
         
         setLoading("正在加载拼图资源...");
         let gameName = get(appData, 'common.name_localized.schinese', get(appData, 'common.name', ''));
