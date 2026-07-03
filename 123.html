@@ -32,7 +32,7 @@
  body.app-empty.app-status-visible .quick-nav {
  display: flex !important;
  }
- body.app-empty.app-status-visible .quick-nav button {
+ body.app-empty.app-status-visible .quick-nav > button {
  display: none;
  }
  body.app-empty .main-container {
@@ -141,12 +141,21 @@
  #error { color: #ef4444; }
  #loading { color: #60a5fa; }
  .app-history {
- width: 100%; max-width: 720px; margin: 0 auto 12px;
- display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;
+ width: 100%; display: flex; flex-direction: column; gap: 6px;
+ }
+ .history-panel {
+    border-top: 1px solid rgba(71, 85, 105, 0.7);
+    margin-top: 4px; padding-top: 8px;
+ }
+ .history-title {
+    color: #94a3b8; font-size: 13px; font-weight: 700;
+    text-align: center; margin-bottom: 6px;
  }
  .history-chip {
  background: #23262a; color: #cbd5e1; border: 1px solid #334155;
- border-radius: 8px; padding: 6px 10px; font-size: 12px; box-shadow: none;
+ border-radius: 8px; padding: 7px 9px; font-size: 12px; box-shadow: none;
+ width: 100%; justify-content: flex-start; text-align: left;
+ overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
  }
  .history-chip:hover:not(:disabled) { background: #334155; box-shadow: none; }
  .game-preview {
@@ -254,23 +263,23 @@
     border-bottom: 1px solid rgba(71, 85, 105, 0.7);
     margin-bottom: 2px;
  }
- .quick-nav button {
+ .quick-nav > button {
     width: 100%; min-height: 42px; padding: 9px 12px 9px 24px;
     font-size: 14px; line-height: 1.2; background: transparent;
     color: #cbd5e1; border: 1px solid transparent; box-shadow: none;
     border-radius: 8px; position: relative; justify-content: flex-start;
     text-align: left;
  }
- .quick-nav button::before {
+ .quick-nav > button::before {
     content: ""; position: absolute; left: 7px; top: 50%;
     width: 4px; height: 20px; transform: translateY(-50%);
     border-radius: 3px; background: transparent;
  }
- .quick-nav button:hover:not(:disabled), .quick-nav button.active {
+ .quick-nav > button:hover:not(:disabled), .quick-nav > button.active {
     background: #1f2a3a; border-color: #3b82f6;
     color: #fff; box-shadow: inset 0 0 0 1px rgba(96,165,250,0.15);
  }
- .quick-nav button:hover:not(:disabled)::before, .quick-nav button.active::before {
+ .quick-nav > button:hover:not(:disabled)::before, .quick-nav > button.active::before {
     background: #60a5fa;
  }
  .fetch-status-panel {
@@ -517,9 +526,9 @@
         flex-direction: row; overflow-x: auto; border-radius: 10px;
     }
     .quick-nav-title { display: none; }
-    .quick-nav button { min-width: 64px; }
-    .quick-nav button::before { display: none; }
-    .fetch-status-panel { display: none; }
+    .quick-nav > button { min-width: 64px; }
+    .quick-nav > button::before { display: none; }
+    .fetch-status-panel, .history-panel { display: none; }
     .video-source-row { grid-template-columns: 1fr; }
     .game-preview-inner { grid-template-columns: 1fr; }
     .game-preview img { min-height: 170px; }
@@ -541,6 +550,10 @@
     <div id="fetchStatusPanel" class="fetch-status-panel" aria-live="polite">
         <div class="fetch-status-title">获取状态</div>
         <div class="fetch-status-item pending"><span class="status-label">等待输入</span></div>
+    </div>
+    <div class="history-panel">
+        <div class="history-title">历史记录</div>
+        <div id="appHistory" class="app-history"></div>
     </div>
 </nav>
 
@@ -629,7 +642,6 @@
     <button id="saveBtn" disabled style="margin-left: auto;">保存图片</button>
     <button id="goToStoreBtn" disabled>前往商店</button>
  </div>
- <div id="appHistory" class="app-history"></div>
  <div id="gamePreview" class="game-preview builder-only" style="display: none;"></div>
 
  <div class="controls builder-only">
