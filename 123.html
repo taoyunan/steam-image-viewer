@@ -148,17 +148,44 @@
     border-top: 1px solid rgba(71, 85, 105, 0.7);
     margin-top: 4px; padding-top: 8px;
  }
+ .history-panel.hidden {
+    display: none;
+ }
  .history-title {
     color: #94a3b8; font-size: 13px; font-weight: 700;
     text-align: center; margin-bottom: 6px;
  }
+ .history-empty {
+    color: #64748b; font-size: 12px; line-height: 1.35; text-align: center;
+    padding: 8px 4px;
+ }
+ .history-row {
+    display: grid; grid-template-columns: minmax(0, 1fr) 30px; gap: 5px;
+    align-items: stretch;
+ }
  .history-chip {
- background: #23262a; color: #cbd5e1; border: 1px solid #334155;
- border-radius: 8px; padding: 7px 9px; font-size: 12px; box-shadow: none;
- width: 100%; justify-content: flex-start; text-align: left;
- overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    background: #23262a; color: #cbd5e1; border: 1px solid #334155;
+    border-radius: 8px; padding: 7px 9px; font-size: 12px; box-shadow: none;
+    width: 100%; justify-content: flex-start; text-align: left;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
  }
  .history-chip:hover:not(:disabled) { background: #334155; box-shadow: none; }
+ .history-delete-btn {
+    min-width: 30px; height: 30px; padding: 0; border-radius: 8px;
+    background: #2a2025; color: #fca5a5; border: 1px solid #7f1d1d;
+    box-shadow: none; font-size: 16px; line-height: 1; justify-content: center;
+ }
+ .history-delete-btn:hover:not(:disabled) {
+    background: #7f1d1d; color: #fff; box-shadow: none;
+ }
+ .history-clear-btn {
+    width: 100%; min-height: 34px; margin-top: 8px; padding: 7px 9px;
+    border-radius: 8px; background: #3b1d1d; color: #fecaca;
+    border: 1px solid #7f1d1d; box-shadow: none; font-size: 12px;
+ }
+ .history-clear-btn:hover:not(:disabled) {
+    background: #7f1d1d; color: #fff; box-shadow: none;
+ }
  .game-preview {
  width: 100%; max-width: 980px; margin: 22px auto 24px;
  background: #1e2433; border: 1px solid #2e3a59; border-radius: 12px;
@@ -257,6 +284,7 @@
     border: 1px solid #334155; border-radius: 12px;
     box-shadow: 0 12px 34px rgba(0,0,0,0.42);
     display: flex; flex-direction: column; gap: 6px;
+    max-height: calc(100vh - 104px); overflow-y: auto;
  }
  .quick-nav-title {
     color: #7dd3fc; font-size: 14px; font-weight: 700;
@@ -548,12 +576,13 @@
     <button type="button" data-scroll-target="videoInspector">视频</button>
     <button type="button" data-scroll-target="imageInspector">图片</button>
     <button type="button" data-scroll-target="urlsBox">链接</button>
+    <button type="button" id="historyToggleBtn">历史</button>
     <div id="fetchStatusPanel" class="fetch-status-panel" aria-live="polite">
         <div class="fetch-status-title">获取状态</div>
         <div class="fetch-status-item pending"><span class="status-label">等待输入</span></div>
     </div>
-    <div class="history-panel">
-        <div class="history-title">历史记录</div>
+    <div id="historyPanel" class="history-panel hidden">
+        <div class="history-title">缓存历史</div>
         <div id="appHistory" class="app-history"></div>
     </div>
 </nav>
@@ -761,6 +790,8 @@
  const videoInspector = document.getElementById("videoInspector");
  const videoList = document.getElementById("videoList");
  const appHistoryBox = document.getElementById("appHistory");
+ const historyPanel = document.getElementById("historyPanel");
+ const historyToggleBtn = document.getElementById("historyToggleBtn");
  const gamePreview = document.getElementById("gamePreview");
  const fetchStatusPanel = document.getElementById("fetchStatusPanel");
  const urlsBox = document.getElementById("urlsBox");
@@ -896,6 +927,7 @@
                 regionalPricesResult: serializeSettled(results.regionalPricesResult)
             }
         };
+        record.appName = getCachedRecordName(record);
         await new Promise((resolve, reject) => {
             const tx = db.transaction(CACHE_STORE_NAME, 'readwrite');
             tx.objectStore(CACHE_STORE_NAME).put(record);
@@ -906,32 +938,104 @@
         console.warn('写入缓存失败:', error);
     }
  }
+ function getCachedRecordName(record) {
+    const appId = String(record?.appId || '');
+    const steamValue = record?.results?.steamCmdResult?.value;
+    const storeValue = record?.results?.storeResult?.value;
+    const appData = steamValue?.data?.[appId];
+    const storeData = storeValue?.[appId]?.data;
+    return record?.appName
+        || get(appData, 'common.name_localized.schinese', '')
+        || get(appData, 'common.name', '')
+        || storeData?.name
+        || '';
+ }
+ async function listCachedAppData() {
+    try {
+        const db = await openCacheDb();
+        if (!db) return [];
+        return await new Promise((resolve, reject) => {
+            const tx = db.transaction(CACHE_STORE_NAME, 'readonly');
+            const request = tx.objectStore(CACHE_STORE_NAME).getAll();
+            request.onsuccess = () => resolve(request.result || []);
+            request.onerror = () => reject(request.error);
+        });
+    } catch (error) {
+        console.warn('读取缓存历史失败:', error);
+        return [];
+    }
+ }
+ async function deleteCachedAppData(appId) {
+    try {
+        const db = await openCacheDb();
+        if (!db) return;
+        await new Promise((resolve, reject) => {
+            const tx = db.transaction(CACHE_STORE_NAME, 'readwrite');
+            tx.objectStore(CACHE_STORE_NAME).delete(String(appId));
+            tx.oncomplete = resolve;
+            tx.onerror = () => reject(tx.error);
+        });
+    } catch (error) {
+        console.warn('删除缓存失败:', error);
+        showError('删除缓存失败，请稍后再试。');
+    }
+ }
+ async function clearCachedAppData() {
+    try {
+        const db = await openCacheDb();
+        if (!db) return;
+        await new Promise((resolve, reject) => {
+            const tx = db.transaction(CACHE_STORE_NAME, 'readwrite');
+            tx.objectStore(CACHE_STORE_NAME).clear();
+            tx.oncomplete = resolve;
+            tx.onerror = () => reject(tx.error);
+        });
+    } catch (error) {
+        console.warn('清空缓存失败:', error);
+        showError('清空缓存失败，请稍后再试。');
+    }
+ }
  function formatCacheTime(timestamp) {
     if (!timestamp) return '';
     return new Date(timestamp).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
  }
- function loadAppHistory() {
-    try { return JSON.parse(localStorage.getItem('steamAssetHistory') || '[]'); }
-    catch { return []; }
- }
- function saveAppHistory(appId, name = '') {
-    const history = loadAppHistory().filter(item => item.appId !== appId);
-    history.unshift({ appId, name, time: Date.now() });
-    localStorage.setItem('steamAssetHistory', JSON.stringify(history.slice(0, 8)));
-    renderAppHistory();
- }
- function renderAppHistory() {
-    const history = loadAppHistory();
+ async function renderAppHistory() {
+    const history = (await listCachedAppData()).sort((a, b) => (b.savedAt || 0) - (a.savedAt || 0));
     appHistoryBox.innerHTML = '';
-    if (history.length === 0) return;
+    if (history.length === 0) {
+        appHistoryBox.innerHTML = '<div class="history-empty">暂无缓存记录</div>';
+        return;
+    }
     history.forEach(item => {
+        const row = document.createElement('div');
+        row.className = 'history-row';
         const button = document.createElement('button');
         button.type = 'button';
         button.className = 'history-chip';
         button.dataset.appId = item.appId;
-        button.textContent = item.name ? `${item.name} · ${item.appId}` : item.appId;
-        appHistoryBox.appendChild(button);
+        const name = getCachedRecordName(item);
+        button.textContent = name ? `${name} · ${item.appId}` : item.appId;
+        button.title = `${button.textContent}${item.savedAt ? `\n缓存时间：${formatCacheTime(item.savedAt)}` : ''}`;
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.type = 'button';
+        deleteBtn.className = 'history-delete-btn';
+        deleteBtn.dataset.action = 'delete-cache';
+        deleteBtn.dataset.appId = item.appId;
+        deleteBtn.textContent = '×';
+        deleteBtn.title = `删除 ${item.appId} 的缓存`;
+        deleteBtn.setAttribute('aria-label', `删除 ${item.appId} 的缓存`);
+
+        row.appendChild(button);
+        row.appendChild(deleteBtn);
+        appHistoryBox.appendChild(row);
     });
+    const clearBtn = document.createElement('button');
+    clearBtn.type = 'button';
+    clearBtn.className = 'history-clear-btn';
+    clearBtn.dataset.action = 'clear-cache';
+    clearBtn.textContent = '删除所有缓存';
+    appHistoryBox.appendChild(clearBtn);
  }
  function inferImagePurpose(url, resolution = '') {
     const lower = url.toLowerCase();
@@ -1358,13 +1462,31 @@
     const top = target.getBoundingClientRect().top + window.pageYOffset - 18;
     window.scrollTo({ top, behavior: 'smooth' });
  });
+ historyToggleBtn.addEventListener('click', () => {
+    const willOpen = historyPanel.classList.contains('hidden');
+    historyPanel.classList.toggle('hidden', !willOpen);
+    historyToggleBtn.classList.toggle('active', willOpen);
+    if (willOpen) renderAppHistory();
+ });
  document.querySelectorAll('.group-mode-btn').forEach(button => {
     button.addEventListener('click', () => {
         imageGroupMode = button.dataset.groupMode;
         renderImageGroups();
     });
  });
- appHistoryBox.addEventListener('click', (event) => {
+ appHistoryBox.addEventListener('click', async (event) => {
+    const deleteBtn = event.target.closest('[data-action="delete-cache"][data-app-id]');
+    if (deleteBtn) {
+        await deleteCachedAppData(deleteBtn.dataset.appId);
+        await renderAppHistory();
+        return;
+    }
+    const clearBtn = event.target.closest('[data-action="clear-cache"]');
+    if (clearBtn) {
+        await clearCachedAppData();
+        await renderAppHistory();
+        return;
+    }
     const button = event.target.closest('.history-chip[data-app-id]');
     if (!button) return;
     appIdInput.value = button.dataset.appId;
@@ -1909,7 +2031,7 @@ function buildApiTable(appData, storeData, regionalReviews = [], regionalPrices 
         
         setLoading("正在加载拼图资源...");
         let gameName = get(appData, 'common.name_localized.schinese', get(appData, 'common.name', ''));
-        saveAppHistory(appId, gameName || storeData?.name || '');
+        renderAppHistory();
         customText = `3DM《${gameName}》专区`;
         document.getElementById("customText").value = customText;
         
