@@ -12,7 +12,7 @@ async function fetchData(appId, options = {}) {
     renderFetchStatus([{ label: forceRefresh ? '正在更新' : '正在读取', state: 'pending', detail: appId }]);
     renderHealthStatus([{ label: '请求中', state: 'pending', detail: forceRefresh ? '正在重新请求 API' : '正在读取缓存或请求 API' }]);
     updateBtn.disabled = true; saveBtn.disabled = true; goToStoreBtn.disabled = true; scaleSlider.disabled = true;
-    toggleApiBtn.style.display = 'none'; apiViewerContainer.style.display = 'none';
+    apiViewerContainer.style.display = 'none';
     videoInspector.style.display = 'none'; videoList.innerHTML = '';
     imageInspector.style.display = 'none'; imageList.innerHTML = ''; urlsBox.value = '';
     screenshotUrls = []; videoData = []; imageItems = []; currentAppSnapshot = null; gamePreview.style.display = 'none';
@@ -117,7 +117,6 @@ async function fetchData(appId, options = {}) {
         
         document.body.classList.remove('app-empty');
         buildApiTable(appData, storeData, regionalReviews, regionalPrices);
-        toggleApiBtn.style.display = 'block';
         renderGamePreview(appData, storeData, regionalPrices);
         
         setLoading("正在加载拼图资源...");
@@ -217,7 +216,7 @@ async function fetchData(appId, options = {}) {
 
         showVideos(videoData);
 
-        imageInspector.style.display = 'block';
+        showDefaultResultModule();
         if (allImageUrls.length > 0 || videoData.length > 0) {
             urlsBox.value = [...new Set(allAssetUrlsForTxt)].join('\n');
             showAssets(allImageUrls);

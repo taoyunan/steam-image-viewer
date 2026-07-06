@@ -11,11 +11,8 @@
  padding-left: 15px; justify-content: center;
  }
  body.app-empty .quick-nav,
- body.app-empty #showEventsBtn,
  body.app-empty .header-controls,
- body.app-empty .side-panel,
  body.app-empty .builder-only,
- body.app-empty #toggleApiControls,
  body.app-empty #apiViewerContainer,
  body.app-empty #videoInspector,
  body.app-empty #imageInspector {
@@ -54,7 +51,7 @@
  body.app-empty #goToStoreBtn {
  display: none;
  }
- .main-container, #imageInspector, #apiViewerContainer {
+ .main-container, #imageInspector, #videoInspector, #apiViewerContainer {
  width: 100%; max-width: 1200px;
  }
  .header-container {
@@ -283,14 +280,29 @@
  padding: 4px 10px; font-size: 12px; cursor: pointer; box-shadow: none;
  }
  .header-btn {
- font-size: 20px; padding: 0 10px; background: #23262a;
+ font-size: 14px; min-height: 38px; padding: 8px 11px; background: #23262a;
  border: 1px solid #2e3a59; box-shadow: none; cursor: pointer;
  }
- #showEventsBtn {
-    position: fixed; top: 25px; left: 20px; z-index: 1001;
+ .top-tools {
+    position: fixed; top: 16px; left: 16px; z-index: 1001;
+    width: 236px; padding: 10px; background: rgba(18, 24, 34, 0.94);
+    border: 1px solid #334155; border-radius: 12px;
+    box-shadow: 0 12px 34px rgba(0,0,0,0.42);
+ }
+ .top-tools-row {
+    display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px;
+ }
+ .top-tools .header-btn {
+    width: 100%; justify-content: center; box-shadow: none;
+    white-space: nowrap;
+ }
+ .top-tools .history-panel {
+    border-top: 1px solid rgba(71, 85, 105, 0.7);
+    margin-top: 10px; padding-top: 9px;
+    max-height: calc(100vh - 160px); overflow-y: auto;
  }
  .quick-nav {
-    position: fixed; left: 16px; top: 82px; z-index: 900;
+    position: fixed; left: 16px; top: 146px; z-index: 900;
     width: 236px; padding: 14px; background: rgba(18, 24, 34, 0.94);
     border: 1px solid #334155; border-radius: 12px;
     box-shadow: 0 12px 34px rgba(0,0,0,0.42);
@@ -612,4 +624,3 @@
     .game-preview-inner { grid-template-columns: 1fr; }
     .game-preview img { min-height: 170px; }
  }
-

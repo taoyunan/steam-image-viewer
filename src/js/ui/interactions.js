@@ -74,24 +74,15 @@
     const button = event.target.closest('button[data-scroll-target]');
     if (!button) return;
     const targetId = button.dataset.scrollTarget;
-    const apiTargets = new Set(['basicInfoSection', 'requirementsSection', 'releaseInfoSection', 'languageSection']);
-    if (apiTargets.has(targetId) && apiViewerContainer.style.display === 'none') {
-        if (toggleApiBtn.style.display === 'none') {
-            showError('请先输入 App ID 并点击“获取”。');
-            return;
-        }
-        apiViewerContainer.style.display = 'block';
-        toggleApiBtn.textContent = '隐藏 API 数据';
-    }
-    const target = document.getElementById(targetId);
-    if (!target || target.offsetParent === null) {
+    const moduleId = NAV_TARGET_TO_MODULE[targetId] || targetId;
+    const moduleElement = document.getElementById(moduleId);
+    const target = document.getElementById(targetId) || moduleElement;
+    if (!moduleElement || !target) {
         showError('该条目当前还没有可跳转内容，请先获取游戏数据。');
         return;
     }
     clearError();
-    document.querySelectorAll('.quick-nav button').forEach(navButton => navButton.classList.toggle('active', navButton === button));
-    const top = target.getBoundingClientRect().top + window.pageYOffset - 18;
-    window.scrollTo({ top, behavior: 'smooth' });
+    setActiveModule(moduleId, targetId);
  });
  historyToggleBtn.addEventListener('click', () => {
     const willOpen = historyPanel.classList.contains('hidden');

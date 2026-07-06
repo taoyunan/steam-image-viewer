@@ -30,7 +30,6 @@ const API_BASE = "https://api.steamcmd.net/v1/info/";
  const urlsBox = document.getElementById("urlsBox");
  const gradientColorInput = document.getElementById("gradientColor");
  const gradientDirectionSelect = document.getElementById("gradientDirection");
- const toggleApiBtn = document.getElementById("toggleApiBtn");
  const apiViewerContainer = document.getElementById("apiViewerContainer");
  const apiTable = document.getElementById("api-table");
  const cropModal = document.getElementById('cropModal');
@@ -69,6 +68,7 @@ const API_BASE = "https://api.steamcmd.net/v1/info/";
  let appSettings = null;
  let currentAppSnapshot = null;
  let lastHealthItems = [];
+ let currentModuleId = 'bannerBuilder';
 
  // --- HELPER FUNCTIONS ---
  function clearError() { errorBox.textContent = ""; }
@@ -529,6 +529,43 @@ const API_BASE = "https://api.steamcmd.net/v1/info/";
             <span class="health-detail">${escapeHtml(item.detail || '')}</span>
         </div>`
     )).join('');
+ }
+ const MODULE_TARGETS = {
+    bannerBuilder: ['bannerBuilder'],
+    apiViewerContainer: ['apiViewerContainer'],
+    videoInspector: ['videoInspector'],
+    imageInspector: ['imageInspector']
+ };
+ const NAV_TARGET_TO_MODULE = {
+    bannerBuilder: 'bannerBuilder',
+    basicInfoSection: 'apiViewerContainer',
+    requirementsSection: 'apiViewerContainer',
+    videoInspector: 'videoInspector',
+    imageInspector: 'imageInspector',
+    urlsBox: 'imageInspector'
+ };
+ function setActiveModule(moduleId, preferredTargetId = '') {
+    currentModuleId = moduleId || currentModuleId || 'bannerBuilder';
+    Object.values(MODULE_TARGETS).flat().forEach(id => {
+        const element = document.getElementById(id);
+        if (element) element.style.display = id === currentModuleId ? 'block' : 'none';
+    });
+    document.querySelectorAll('.quick-nav button[data-scroll-target]').forEach(button => {
+        const buttonModule = NAV_TARGET_TO_MODULE[button.dataset.scrollTarget] || button.dataset.scrollTarget;
+        const shouldActivate = preferredTargetId
+            ? button.dataset.scrollTarget === preferredTargetId
+            : buttonModule === currentModuleId;
+        button.classList.toggle('active', shouldActivate);
+    });
+    if (preferredTargetId) {
+        const preferredTarget = document.getElementById(preferredTargetId);
+        if (preferredTarget && preferredTarget.offsetParent !== null) {
+            preferredTarget.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }
+ }
+ function showDefaultResultModule() {
+    setActiveModule('apiViewerContainer', 'basicInfoSection');
  }
  async function runLimited(items, limit, worker) {
     const results = new Array(items.length);

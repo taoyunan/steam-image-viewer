@@ -9,7 +9,19 @@
 </head>
 <body class="app-empty">
 
-<button id="showEventsBtn" class="header-btn" title="查看 Steam 活动日历">📅</button>
+<div class="top-tools" aria-label="快捷工具">
+    <div class="top-tools-row">
+        <button id="showEventsBtn" class="header-btn" title="查看 Steam 活动日历">游戏节</button>
+        <button type="button" id="historyToggleBtn" class="header-btn">历史</button>
+        <button type="button" id="showSettingsBtn" class="header-btn">设置</button>
+        <button id="showTagsBtn" class="header-btn" title="查看所有标签 ID">标签ID</button>
+    </div>
+    <div id="historyPanel" class="history-panel hidden">
+        <div class="history-title">缓存历史</div>
+        <div id="appHistory" class="app-history"></div>
+        <div id="cacheDetailPanel" class="cache-detail-panel hidden"></div>
+    </div>
+</div>
 <nav class="quick-nav" aria-label="快速跳转">
     <div class="quick-nav-title">导航</div>
     <button type="button" data-scroll-target="bannerBuilder">横幅</button>
@@ -18,8 +30,6 @@
     <button type="button" data-scroll-target="videoInspector">视频</button>
     <button type="button" data-scroll-target="imageInspector">图片</button>
     <button type="button" data-scroll-target="urlsBox">链接</button>
-    <button type="button" id="historyToggleBtn">历史</button>
-    <button type="button" id="showSettingsBtn">设置</button>
     <div id="fetchStatusPanel" class="fetch-status-panel" aria-live="polite">
         <div class="fetch-status-title">获取状态</div>
         <div class="fetch-status-item pending"><span class="status-label">等待输入</span></div>
@@ -27,11 +37,6 @@
     <div id="healthPanel" class="health-panel" aria-live="polite">
         <div class="health-title">接口健康</div>
         <div class="health-row pending"><span class="health-name">等待</span><span class="health-detail">输入 AppID 后显示</span></div>
-    </div>
-    <div id="historyPanel" class="history-panel hidden">
-        <div class="history-title">缓存历史</div>
-        <div id="appHistory" class="app-history"></div>
-        <div id="cacheDetailPanel" class="cache-detail-panel hidden"></div>
     </div>
 </nav>
 
@@ -60,7 +65,7 @@
 
 <div id="eventsViewer" class="side-panel hidden">
     <div class="panel-header">
-        <h2>Steam 游戏节 (2025+)</h2>
+        <h2>Steam 游戏节 / 特卖 (2026)</h2>
         <button id="hideEventsBtn" class="toggle-panel-btn">关闭</button>
     </div>
     <div id="eventsListContainer">
@@ -132,7 +137,6 @@
      <h1>枫小痕自己的steamdb</h1>
      <div class="header-controls">
         <a href="https://github.com/taoyunan/steam-image-viewer" target="_blank" title="查看 GitHub 仓库" style="color: #bbb; text-decoration: none; font-weight: 500; font-size: 16px;">GitHub</a>
-        <button id="showTagsBtn" class="header-btn" title="查看所有标签">🏷️</button>
         <button id="showTutorialBtn" class="header-btn" title="显示教程">?</button>
      </div>
  </div>
@@ -173,10 +177,6 @@
  </select>
  </div>
  <div class="status-box"> <div id="loading"></div> <div id="error"></div> </div>
-</div>
-
-<div class="controls" id="toggleApiControls" style="justify-content: center; margin-top: 20px;">
-    <button id="toggleApiBtn" style="display: none;">查看 API 数据</button>
 </div>
 
 <div id="apiViewerContainer" style="display: none;">
@@ -247,7 +247,7 @@
 <script src="./src/js/features/api-viewer.js"></script>
 <script src="./src/js/features/exporter.js"></script>
 <script src="./src/js/app/fetch-flow.js"></script>
-<script src="./src/js/data/steam-metadata.js"></script>
+<script src="./src/js/metadata/steam-metadata.js"></script>
 <script src="./src/js/main.js"></script>
 </body>
 </html>
