@@ -57,6 +57,7 @@
  body.app-empty #fetchBtn {
  height: 42px; padding: 10px 24px; margin-left: 8px !important;
  }
+ body.app-empty #updateBtn,
  body.app-empty #saveBtn,
  body.app-empty #goToStoreBtn {
  display: none;
@@ -639,6 +640,7 @@
  <div class="controls app-search-controls">
     <input type="text" id="appId" placeholder="输入 Steam App ID 或商店链接" autocomplete="off" />
     <button id="fetchBtn" style="margin-left: 12px;">获取</button>
+    <button id="updateBtn" disabled>更新</button>
     <button id="saveBtn" disabled style="margin-left: auto;">保存图片</button>
     <button id="goToStoreBtn" disabled>前往商店</button>
  </div>
@@ -749,6 +751,7 @@
  const loadingBox = document.getElementById("loading");
  const scaleSlider = document.getElementById("scaleSlider");
  const scalePercent = document.getElementById("scalePercent");
+ const updateBtn = document.getElementById("updateBtn");
  const saveBtn = document.getElementById("saveBtn");
  const goToStoreBtn = document.getElementById("goToStoreBtn");
  const overlaySlider = document.getElementById("overlaySlider");
@@ -828,6 +831,84 @@
     const raw = String(rawInput || '').trim();
     const urlMatch = raw.match(/store\.steampowered\.com\/app\/(\d+)/);
     return urlMatch?.[1] || raw;
+ }
+ const CACHE_DB_NAME = 'steamImageViewerCache';
+ const CACHE_STORE_NAME = 'appApiData';
+ const CACHE_VERSION = 1;
+ let cacheDbPromise = null;
+ function openCacheDb() {
+    if (!('indexedDB' in window)) return Promise.resolve(null);
+    if (cacheDbPromise) return cacheDbPromise;
+    cacheDbPromise = new Promise((resolve) => {
+        const request = indexedDB.open(CACHE_DB_NAME, CACHE_VERSION);
+        request.onupgradeneeded = () => {
+            const db = request.result;
+            if (!db.objectStoreNames.contains(CACHE_STORE_NAME)) {
+                db.createObjectStore(CACHE_STORE_NAME, { keyPath: 'appId' });
+            }
+        };
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => {
+            console.warn('缓存数据库打开失败:', request.error);
+            resolve(null);
+        };
+    });
+    return cacheDbPromise;
+ }
+ function serializeSettled(result) {
+    if (!result) return { status: 'rejected', reasonMessage: '无结果' };
+    if (result.status === 'fulfilled') return { status: 'fulfilled', value: result.value };
+    return { status: 'rejected', reasonMessage: result.reason?.message || String(result.reason || '请求失败') };
+ }
+ function restoreSettled(result) {
+    if (!result || result.status !== 'fulfilled') {
+        return { status: 'rejected', reason: { message: result?.reasonMessage || '缓存中没有该数据' } };
+    }
+    return { status: 'fulfilled', value: result.value };
+ }
+ async function readCachedAppData(appId) {
+    try {
+        const db = await openCacheDb();
+        if (!db) return null;
+        return await new Promise((resolve, reject) => {
+            const tx = db.transaction(CACHE_STORE_NAME, 'readonly');
+            const request = tx.objectStore(CACHE_STORE_NAME).get(String(appId));
+            request.onsuccess = () => resolve(request.result || null);
+            request.onerror = () => reject(request.error);
+        });
+    } catch (error) {
+        console.warn('读取缓存失败:', error);
+        return null;
+    }
+ }
+ async function writeCachedAppData(appId, results) {
+    try {
+        const db = await openCacheDb();
+        if (!db) return;
+        const record = {
+            appId: String(appId),
+            savedAt: Date.now(),
+            version: CACHE_VERSION,
+            results: {
+                steamCmdResult: serializeSettled(results.steamCmdResult),
+                storeResult: serializeSettled(results.storeResult),
+                regionalReviewsResult: serializeSettled(results.regionalReviewsResult),
+                regionalPricesResult: serializeSettled(results.regionalPricesResult)
+            }
+        };
+        await new Promise((resolve, reject) => {
+            const tx = db.transaction(CACHE_STORE_NAME, 'readwrite');
+            tx.objectStore(CACHE_STORE_NAME).put(record);
+            tx.oncomplete = resolve;
+            tx.onerror = () => reject(tx.error);
+        });
+    } catch (error) {
+        console.warn('写入缓存失败:', error);
+    }
+ }
+ function formatCacheTime(timestamp) {
+    if (!timestamp) return '';
+    return new Date(timestamp).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
  }
  function loadAppHistory() {
     try { return JSON.parse(localStorage.getItem('steamAssetHistory') || '[]'); }
@@ -1706,18 +1787,19 @@ function buildApiTable(appData, storeData, regionalReviews = [], regionalPrices 
     apiTable.innerHTML = html;
 }
  
- async function fetchData(appId) {
+ async function fetchData(appId, options = {}) {
     try {
         await tagsPromise; // Ensure tags are loaded before proceeding
     } catch (error) {
         // Error is already logged in loadSteamTags, just continue gracefully
     }
 
-    clearError(); setLoading("正在请求API...");
+    const forceRefresh = Boolean(options.forceRefresh);
+    clearError(); setLoading(forceRefresh ? "正在更新API..." : "正在读取数据...");
     document.body.classList.add('app-empty');
     document.body.classList.add('app-status-visible');
-    renderFetchStatus([{ label: '正在请求', state: 'pending', detail: appId }]);
-    saveBtn.disabled = true; goToStoreBtn.disabled = true; scaleSlider.disabled = true; 
+    renderFetchStatus([{ label: forceRefresh ? '正在更新' : '正在读取', state: 'pending', detail: appId }]);
+    updateBtn.disabled = true; saveBtn.disabled = true; goToStoreBtn.disabled = true; scaleSlider.disabled = true;
     toggleApiBtn.style.display = 'none'; apiViewerContainer.style.display = 'none';
     videoInspector.style.display = 'none'; videoList.innerHTML = '';
     imageInspector.style.display = 'none'; imageList.innerHTML = ''; urlsBox.value = '';
@@ -1725,17 +1807,44 @@ function buildApiTable(appData, storeData, regionalReviews = [], regionalPrices 
 
     try {
         const storeApiUrl = `${STORE_API_BASE}${appId}&l=schinese&cc=cn`;
-        
-        const [steamCmdResult, storeResult, regionalReviewsResult, regionalPricesResult] = await Promise.allSettled([
-            fetchJsonWithFallback(API_BASE + appId, { directFirst: true, timeoutMs: 10000 }),
-            fetchJsonWithFallback(storeApiUrl, { directFirst: true, proxy: true, timeoutMs: 10000 }),
-            fetchRegionalReviews(appId),
-            fetchRegionalPrices(appId)
-        ]);
+        let cacheRecord = null;
+        let cacheWasUpdated = false;
+        let steamCmdResult, storeResult, regionalReviewsResult, regionalPricesResult;
+
+        if (!forceRefresh) {
+            cacheRecord = await readCachedAppData(appId);
+        }
+
+        if (cacheRecord?.results) {
+            setLoading("正在读取缓存...");
+            steamCmdResult = restoreSettled(cacheRecord.results.steamCmdResult);
+            storeResult = restoreSettled(cacheRecord.results.storeResult);
+            regionalReviewsResult = restoreSettled(cacheRecord.results.regionalReviewsResult);
+            regionalPricesResult = restoreSettled(cacheRecord.results.regionalPricesResult);
+        } else {
+            setLoading(forceRefresh ? "正在重新请求API..." : "正在请求API...");
+            [steamCmdResult, storeResult, regionalReviewsResult, regionalPricesResult] = await Promise.allSettled([
+                fetchJsonWithFallback(API_BASE + appId, { directFirst: true, timeoutMs: 10000 }),
+                fetchJsonWithFallback(storeApiUrl, { directFirst: true, proxy: true, timeoutMs: 10000 }),
+                fetchRegionalReviews(appId),
+                fetchRegionalPrices(appId)
+            ]);
+            const hasPrimaryData = (steamCmdResult.status === 'fulfilled' && steamCmdResult.value?.data?.[appId])
+                || (storeResult.status === 'fulfilled' && storeResult.value?.[appId]?.success);
+            if (hasPrimaryData) {
+                await writeCachedAppData(appId, { steamCmdResult, storeResult, regionalReviewsResult, regionalPricesResult });
+                cacheWasUpdated = true;
+            }
+        }
 
         let steamCmdJson = {};
         let appData = null;
         const statusItems = [];
+        if (cacheRecord) {
+            statusItems.push({ label: '使用缓存', state: 'ok', detail: `缓存时间：${formatCacheTime(cacheRecord.savedAt)}` });
+        } else if (cacheWasUpdated) {
+            statusItems.push({ label: '缓存已更新', state: 'ok', detail: '已保存本次 API 结果，下次获取会优先读取缓存' });
+        }
         if (steamCmdResult.status === 'fulfilled') {
             steamCmdJson = steamCmdResult.value;
             appData = steamCmdJson.data?.[appId] || null;
@@ -1850,6 +1959,7 @@ function buildApiTable(appData, storeData, regionalReviews = [], regionalPrices 
             statusItems.push({ label: '横幅素材缺失', state: 'warn', detail: '未获取到 library hero 或商店头图' });
         }
         goToStoreBtn.disabled = false;
+        updateBtn.disabled = false;
 
         setLoading("正在解析图片与视频资源...");
         let candidates = findImageCandidates(steamCmdJson);
@@ -1891,6 +2001,7 @@ function buildApiTable(appData, storeData, regionalReviews = [], regionalPrices 
         renderFetchStatus([{ label: '获取失败', state: 'fail', detail: e.message || '未知错误' }]);
         showError(e.message || "未知错误");
         clearLoading();
+        updateBtn.disabled = false;
     }
 }
  
@@ -2144,7 +2255,15 @@ function buildApiTable(appData, storeData, regionalReviews = [], regionalPrices 
      if (!/^\d+$/.test(appId)) { showError("请输入有效的 Steam App ID 或商店链接"); return; }
      fetchData(appId);
  });
- 
+
+ updateBtn.addEventListener("click", () => {
+     const rawInput = appIdInput.value.trim();
+     let appId = parseAppId(rawInput);
+     if (appId !== rawInput) { appIdInput.value = appId; }
+     if (!/^\d+$/.test(appId)) { showError("请输入有效的 Steam App ID 或商店链接"); return; }
+     fetchData(appId, { forceRefresh: true });
+ });
+
  toggleApiBtn.addEventListener('click', () => {
      const isHidden = apiViewerContainer.style.display === 'none';
      apiViewerContainer.style.display = isHidden ? 'block' : 'none';
