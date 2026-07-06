@@ -88,10 +88,15 @@ const API_BASE = "https://api.steamcmd.net/v1/info/";
     return list.filter(Boolean).map(formatter).join(', ');
  };
  const createSearchLink = (name) => `<a href="https://store.steampowered.com/search/?term=${encodeURIComponent(name)}" target="_blank">${escapeHtml(name)}</a>`;
- const createExternalLink = (url, label = url) => {
+const createExternalLink = (url, label = url) => {
     if (!url) return '';
     return `<a href="${escapeHtml(url)}" target="_blank">${escapeHtml(label)}</a>`;
- };
+};
+const createSteamTagLink = (tagName, extraClass = '') => {
+    if (!tagName) return '';
+    const className = extraClass ? `api-tag ${extraClass}` : 'api-tag';
+    return `<a class="${className}" href="https://store.steampowered.com/tags/zh-cn/${encodeURIComponent(tagName)}/" target="_blank" rel="noopener noreferrer">${escapeHtml(tagName)}</a>`;
+};
  function stripHtml(html) {
     const div = document.createElement('div');
     div.innerHTML = html || '';
@@ -421,7 +426,7 @@ const API_BASE = "https://api.steamcmd.net/v1/info/";
                 <div class="game-preview-meta">${meta}</div>
                 ${facts ? `<div class="game-preview-facts">${facts}</div>` : ''}
                 ${desc ? `<p class="game-preview-desc">${escapeHtml(desc)}</p>` : ''}
-                <div class="game-preview-tags">${[...genres, ...categories].map(tag => `<span class="api-tag">${escapeHtml(tag)}</span>`).join('')}</div>
+                <div class="game-preview-tags">${[...genres, ...categories].map(tag => createSteamTagLink(tag)).join('')}</div>
                 <div class="game-preview-actions">
                     <a class="preview-link" href="https://store.steampowered.com/app/${escapeHtml(appId)}/" target="_blank">打开 Steam 商店</a>
                     ${storeData?.website ? `<a class="preview-link" href="${escapeHtml(storeData.website)}" target="_blank">官网</a>` : ''}
@@ -533,22 +538,22 @@ const API_BASE = "https://api.steamcmd.net/v1/info/";
  const MODULE_TARGETS = {
     bannerBuilder: ['bannerBuilder'],
     apiViewerContainer: ['apiViewerContainer'],
-    videoInspector: ['videoInspector'],
-    imageInspector: ['imageInspector']
+    mediaInspector: ['videoInspector', 'imageInspector']
  };
  const NAV_TARGET_TO_MODULE = {
     bannerBuilder: 'bannerBuilder',
     basicInfoSection: 'apiViewerContainer',
     requirementsSection: 'apiViewerContainer',
-    videoInspector: 'videoInspector',
-    imageInspector: 'imageInspector',
-    urlsBox: 'imageInspector'
+    videoInspector: 'mediaInspector',
+    imageInspector: 'mediaInspector',
+    urlsBox: 'mediaInspector'
  };
  function setActiveModule(moduleId, preferredTargetId = '') {
     currentModuleId = moduleId || currentModuleId || 'bannerBuilder';
+    const visibleTargets = MODULE_TARGETS[currentModuleId] || [currentModuleId];
     Object.values(MODULE_TARGETS).flat().forEach(id => {
         const element = document.getElementById(id);
-        if (element) element.style.display = id === currentModuleId ? 'block' : 'none';
+        if (element) element.style.display = visibleTargets.includes(id) ? 'block' : 'none';
     });
     document.querySelectorAll('.quick-nav button[data-scroll-target]').forEach(button => {
         const buttonModule = NAV_TARGET_TO_MODULE[button.dataset.scrollTarget] || button.dataset.scrollTarget;

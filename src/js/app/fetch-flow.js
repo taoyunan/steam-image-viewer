@@ -369,7 +369,7 @@ async function fetchData(appId, options = {}) {
     tagsData.sort((a, b) => a.tagid - b.tagid);
     let html = '';
     tagsData.forEach(tag => {
-        html += `<div class="tag-item"><span class="tag-id">${tag.tagid}:</span>${tag.name}</div>`;
+        html += `<div class="tag-item"><span class="tag-id">${tag.tagid}:</span>${createSteamTagLink(tag.name, 'tag-link')}</div>`;
     });
     tagsListContainer.innerHTML = html;
  }

@@ -92,11 +92,11 @@ function buildApiTable(appData, storeData, regionalReviews = [], regionalPrices 
         }
         
         if(storeData.genres) {
-            const genresHtml = storeData.genres.map(g => `<span class="api-tag">${g.description}</span>`).join(' ');
+            const genresHtml = storeData.genres.map(g => createSteamTagLink(g.description)).join(' ');
             addRow('分类', genresHtml);
         }
         if(storeData.categories) {
-            const categoriesHtml = storeData.categories.map(c => `<span class="api-tag">${c.description}</span>`).join(' ');
+            const categoriesHtml = storeData.categories.map(c => createSteamTagLink(c.description)).join(' ');
             addRow('小分类', categoriesHtml);
         }
     }
@@ -107,7 +107,7 @@ function buildApiTable(appData, storeData, regionalReviews = [], regionalPrices 
         .map(tagId => steamTags.get(String(tagId)))
         .filter(Boolean);
     if (playerTags.length > 0) {
-        const tagsHtml = playerTags.map(tagName => `<span class="api-tag">${tagName}</span>`).join(' ');
+        const tagsHtml = playerTags.map(tagName => createSteamTagLink(tagName)).join(' ');
         addRow('玩家标签', tagsHtml);
     }
 

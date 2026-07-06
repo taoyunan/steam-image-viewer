@@ -75,9 +75,10 @@
     if (!button) return;
     const targetId = button.dataset.scrollTarget;
     const moduleId = NAV_TARGET_TO_MODULE[targetId] || targetId;
-    const moduleElement = document.getElementById(moduleId);
+    const moduleTargetIds = MODULE_TARGETS[moduleId] || [moduleId];
+    const moduleElement = document.getElementById(moduleId) || document.getElementById(moduleTargetIds[0]);
     const target = document.getElementById(targetId) || moduleElement;
-    if (!moduleElement || !target) {
+    if (!moduleTargetIds.some(id => document.getElementById(id)) || !target) {
         showError('该条目当前还没有可跳转内容，请先获取游戏数据。');
         return;
     }
