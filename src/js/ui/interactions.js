@@ -131,3 +131,19 @@
     appIdInput.value = button.dataset.appId;
     fetchData(button.dataset.appId);
  });
+
+ document.getElementById("fetchBtn").addEventListener("click", () => {
+     const rawInput = appIdInput.value.trim();
+     let appId = parseAppId(rawInput);
+     if (appId !== rawInput) { appIdInput.value = appId; }
+     if (!/^\d+$/.test(appId)) { showError("请输入有效的 Steam App ID 或商店链接"); return; }
+     fetchData(appId);
+ });
+
+ updateBtn.addEventListener("click", () => {
+     const rawInput = appIdInput.value.trim();
+     let appId = parseAppId(rawInput);
+     if (appId !== rawInput) { appIdInput.value = appId; }
+     if (!/^\d+$/.test(appId)) { showError("请输入有效的 Steam App ID 或商店链接"); return; }
+     fetchData(appId, { forceRefresh: true });
+ });
