@@ -565,7 +565,7 @@ const API_BASE = "https://api.steamcmd.net/v1/info/";
     }
  }
  function showDefaultResultModule() {
-    setActiveModule('apiViewerContainer', 'basicInfoSection');
+    setActiveModule('bannerBuilder', 'bannerBuilder');
  }
  async function runLimited(items, limit, worker) {
     const results = new Array(items.length);
