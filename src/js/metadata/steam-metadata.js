@@ -1,17 +1,15 @@
 function loadSteamTags() {
-    const tagsApiUrl = 'https://store.steampowered.com/tagdata/populartags/schinese';
     tagsListContainer.innerHTML = `<div class="tag-item">正在加载标签列表...</div>`;
-    return fetchJsonWithFallback(tagsApiUrl, { directFirst: true, proxy: 'corsproxy', timeoutMs: 10000 })
-        .then(tagsData => {
-            if (!Array.isArray(tagsData)) throw new Error('Steam 标签接口返回格式无效');
-            tagsData.forEach(tag => steamTags.set(String(tag.tagid), tag.name));
-            console.log(`Loaded ${steamTags.size} Steam tags.`);
-            populateTagsViewer(tagsData);
-        })
-        .catch(error => {
-            console.error("Error fetching Steam tags:", error);
-            tagsListContainer.innerHTML = `<div class="tag-item" style="color:#ef4444;">标签列表加载失败。</div>`;
-        });
+    const tagsData = Array.isArray(window.STEAM_TAGS_SCHINESE) ? window.STEAM_TAGS_SCHINESE : [];
+    if (!tagsData.length) {
+        tagsListContainer.innerHTML = `<div class="tag-item" style="color:#ef4444;">标签数据文件缺失。</div>`;
+        return Promise.resolve();
+    }
+    steamTags.clear();
+    tagsData.forEach(tag => steamTags.set(String(tag.tagid), tag.name));
+    console.log(`Loaded ${steamTags.size} Steam tags from local data.`);
+    populateTagsViewer(tagsData);
+    return Promise.resolve();
  }
  
  function displaySteamEvents() {
